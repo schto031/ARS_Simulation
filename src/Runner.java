@@ -25,6 +25,14 @@ public class Runner extends JFrame {
     private Runner() {
         setSize(new Dimension(800,600));
         setTitle("Low budget robot simulator");
+        var menu=new JMenu("Options");
+        var menuBar=new JMenuBar();
+        var reconfigure=new JMenuItem("Reconfigure");
+        reconfigure.addActionListener(a-> JOptionPane.showMessageDialog(null, "This does nothing yet"));
+        menu.add(reconfigure);
+        menuBar.add(menu);
+        setJMenuBar(menuBar);
+
         var robo=new Robo(20, ()->SwingUtilities.invokeLater(this::repaint));
         add(new RoboPanel(robo));
         addKeyListener(new KeyListener() {
