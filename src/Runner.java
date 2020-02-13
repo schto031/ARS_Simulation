@@ -11,7 +11,7 @@ public class Runner extends JFrame {
         public RoboPanel(Robo robo) {
             this.robo=robo;
             var executor=new ScheduledThreadPoolExecutor(1);
-            executor.scheduleAtFixedRate(robo,0,10, TimeUnit.MILLISECONDS);
+            executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
             executor.scheduleWithFixedDelay(()-> System.out.println(robo),0,1, TimeUnit.SECONDS);
         }
 
