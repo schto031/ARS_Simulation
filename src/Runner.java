@@ -22,8 +22,9 @@ public class Runner extends JFrame {
         }
     }
 
-    private Runner() throws InterruptedException {
+    private Runner() {
         setSize(new Dimension(800,600));
+        setTitle("Low budget robot simulator");
         var robo=new Robo(20, ()->SwingUtilities.invokeLater(this::repaint));
         add(new RoboPanel(robo));
         addKeyListener(new KeyListener() {
@@ -41,6 +42,8 @@ public class Runner extends JFrame {
                     case 'f': robo.orientation--; break;
                     case 'x': robo.vl =0; robo.vr =0; break;
                     case 'r': robo.x=400;robo.y=300; break;
+                    case 't': robo.vl++; robo.vr++; break;
+                    case 'g': robo.vl--; robo.vr--;  break;
                     default:
                 }
             }
@@ -51,7 +54,7 @@ public class Runner extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         System.setProperty("sun.java2d.opengl", "true");
         var runner=new Runner();
         SwingUtilities.invokeLater(()->runner.setVisible(true));
