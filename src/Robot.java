@@ -6,17 +6,17 @@ public class Robot {
 	public double posXD;
 	public double posYD;
 	
-	public int Vr; //velocity right wheel
-	public int Vl; //velocity left wheel
+	public double Vr; //velocity right wheel
+	public double Vl; //velocity left wheel
 	
-	public int l; //length of axis of robot
+	public double l; //length of axis of robot
 	public double rotation;
-	public int R;
-	public int ICCx; //double value casting the double icc position to an integer because of pixels
-	public int ICCy;
+	public double R;
+	public double ICCx; //double value casting the double icc position to an integer because of pixels
+	public double ICCy;
 	public double ICCxd; //double value representing the real x position of icc
 	public double ICCyd; //double value representing the real y position of icc
-	public double teta; //angle of robot with Xaxis sssssss
+	public double teta; //angle of robot with Xaxis
 	
 	
 	public Robot(int posX, int posY) {
@@ -44,9 +44,9 @@ public class Robot {
 			rotation = 0;
 		} else if(Vr == -Vl) {
 			R = 0;
-			rotation = ((double)(Vr-Vl))/l;
+			rotation = (Vr-Vl)/l;
 		}else {
-			rotation = ((double)(Vr-Vl))/l;
+			rotation = (Vr-Vl)/l;
 			R= (l/2)*((Vl+Vr)/(Vr-Vl));
 		}
 	}
@@ -72,11 +72,14 @@ public class Robot {
 	
 	public void update(double time) {
 		//System.out.println("Vl="+this.Vl+" Vr="+this.Vr);
+		var V=(this.Vl+this.Vr)/2;
 		this.posXD = ((Math.cos(rotation*time)))*(this.posXD-this.ICCxd)+
 					((-Math.sin(rotation*time)))*(this.posYD-this.ICCyd)+
+					V*time+
 					this.ICCxd;
 		this.posYD = ((Math.sin(rotation*time)))*(this.posXD-this.ICCxd)+
 					((Math.cos(rotation*time)))*(this.posYD-this.ICCyd)+
+					V*time+
 					this.ICCyd;
 		this.teta = this.teta + rotation*time;
 		this.posX= (int)posXD;
@@ -91,6 +94,4 @@ public class Robot {
 	public int coordToNumber(int x, int y) {
 		return ((y+10)*640)+x;
 	}
-	
-
 }
