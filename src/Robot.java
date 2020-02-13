@@ -14,7 +14,7 @@ public class Robot {
 	public int R;
 	public int ICCx;
 	public int ICCy;
-	public double teta; //angle of robot wit Xaxis
+	public double teta; //angle of robot with Xaxis
 	
 	
 	public Robot(int posX, int posY) {
