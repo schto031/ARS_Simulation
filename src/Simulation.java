@@ -1,18 +1,7 @@
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Stroke;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 public class Simulation implements Runnable{
 	
@@ -175,7 +164,4 @@ public class Simulation implements Runnable{
 	public static void main(String [] args) {
 		Simulation game = new Simulation();
 	}
-	
-	
-
 }
