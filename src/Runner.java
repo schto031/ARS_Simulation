@@ -10,7 +10,9 @@ public class Runner extends JFrame {
         private volatile Robo robo;
         public RoboPanel(Robo robo) {
             this.robo=robo;
-            new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(robo,0,10, TimeUnit.MILLISECONDS);
+            var executor=new ScheduledThreadPoolExecutor(1);
+            executor.scheduleAtFixedRate(robo,0,1, TimeUnit.MILLISECONDS);
+            executor.scheduleAtFixedRate(()-> System.out.println(robo),0,1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -22,7 +24,7 @@ public class Runner extends JFrame {
 
     private Runner() throws InterruptedException {
         setSize(new Dimension(800,600));
-        var robo=new Robo(10, ()->SwingUtilities.invokeLater(this::repaint));
+        var robo=new Robo(20, ()->SwingUtilities.invokeLater(this::repaint));
         add(new RoboPanel(robo));
         addKeyListener(new KeyListener() {
             @Override
@@ -35,6 +37,8 @@ public class Runner extends JFrame {
                     case 's': robo.vX--; break;
                     case 'o': robo.vY++; break;
                     case 'l': robo.vY--; break;
+                    case 'd': robo.orientation++; break;
+                    case 'f': robo.orientation--; break;
                     case 'x': robo.vX=0; robo.vY=0; break;
                     case 'r': robo.x=0; robo.y=0; break;
                     default:
@@ -48,6 +52,7 @@ public class Runner extends JFrame {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        System.setProperty("sun.java2d.opengl", "true");
         var runner=new Runner();
         SwingUtilities.invokeLater(()->runner.setVisible(true));
     }

@@ -13,7 +13,11 @@ public class Robo implements Runnable {
 
     public void draw(Graphics2D graphics){
         graphics.drawOval((int)x,(int)y,(int)width,(int)width);
-        graphics.drawLine((int)(x+width/2),(int)(y+width/2),(int)(x+width*Math.cos(orientation)),(int)(y+width*Math.sin(orientation)));
+        var halfWidth=width/2;
+        var midX=x+halfWidth;
+        var midY=y+halfWidth;
+        var radians=Math.toRadians(orientation);
+        graphics.drawLine((int)midX,(int)midY,(int)(midX+halfWidth*Math.sin(radians)),(int)(midY+halfWidth*Math.cos(radians)));
     }
 
     @Override
@@ -23,13 +27,18 @@ public class Robo implements Runnable {
                 ", y=" + y +
                 ", vX=" + vX +
                 ", vY=" + vY +
+                ", orientation=" + orientation +
+                ", width=" + width +
                 '}';
     }
 
     @Override
     public void run() {
-        x+=vX*FRAME_SKIP;
-        y+=vY*FRAME_SKIP;
+        var v=(vX+vY)/2;
+        var radians=Math.toRadians(orientation);
+        x+=v*Math.sin(radians)*FRAME_SKIP;
+        y+=v*Math.cos(radians)*FRAME_SKIP;
+
         postUpdateHook.run();
 //        System.out.println(this);
     }
