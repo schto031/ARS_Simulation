@@ -12,7 +12,7 @@ public class Runner extends JFrame {
             this.robo=robo;
             var executor=new ScheduledThreadPoolExecutor(1);
             executor.scheduleAtFixedRate(robo,0,10, TimeUnit.MILLISECONDS);
-            executor.scheduleAtFixedRate(()-> System.out.println(robo),0,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.out.println(robo),0,1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -28,7 +28,7 @@ public class Runner extends JFrame {
         var menu=new JMenu("Options");
         var menuBar=new JMenuBar();
         var reconfigure=new JMenuItem("Reconfigure");
-        reconfigure.addActionListener(a-> JOptionPane.showMessageDialog(null, "This does nothing yet"));
+        reconfigure.addActionListener(a-> JOptionPane.showMessageDialog(this, "This does nothing yet"));
         menu.add(reconfigure);
         menuBar.add(menu);
         setJMenuBar(menuBar);
