@@ -12,9 +12,11 @@ public class Robot {
 	public int l; //length of axis of robot
 	public double rotation;
 	public int R;
-	public int ICCx;
+	public int ICCx; //double value casting the double icc position to an integer because of pixels
 	public int ICCy;
-	public double teta; //angle of robot with Xaxis
+	public double ICCxd; //double value representing the real x position of icc
+	public double ICCyd; //double value representing the real y position of icc
+	public double teta; //angle of robot with Xaxis sssssss
 	
 	
 	public Robot(int posX, int posY) {
@@ -24,16 +26,16 @@ public class Robot {
 		this.posYD = this.posY;
 		this.Vr = 0;
 		this.Vl = 0;
-		this.l = 50;
+		this.l = 100; //simulation does not start working until you hit velocity of 100, this has something to do with l
 		this.teta = 0;
 		calculateParams();
 		calculateICC();
 	}
 	
 	public void calculateICC() {
-		this.ICCx = (int) Math.round(this.posX - this.R*Math.sin(this.teta));
-		this.ICCy = (int) Math.round(this.posY + this.R*Math.cos(this.teta));
-		System.out.println("New ICC: "+ICCx+" "+ICCy);
+		this.ICCxd = (this.posX - this.R*Math.sin(this.teta));
+		this.ICCyd = (this.posY + this.R*Math.cos(this.teta));
+		System.out.println("New ICC: "+ICCxd+" "+ICCyd);
 	}
 	
 	public void calculateParams() {
@@ -70,15 +72,17 @@ public class Robot {
 	
 	public void update(double time) {
 		//System.out.println("Vl="+this.Vl+" Vr="+this.Vr);
-		this.posXD = ((Math.cos(rotation*time)))*(this.posXD-this.ICCx)+
-					((-Math.sin(rotation*time)))*(this.posYD-this.ICCy)+
-					this.ICCx;
-		this.posYD = ((Math.sin(rotation*time)))*(this.posXD-this.ICCx)+
-					((Math.cos(rotation*time)))*(this.posYD-this.ICCy)+
-					this.ICCy;
+		this.posXD = ((Math.cos(rotation*time)))*(this.posXD-this.ICCxd)+
+					((-Math.sin(rotation*time)))*(this.posYD-this.ICCyd)+
+					this.ICCxd;
+		this.posYD = ((Math.sin(rotation*time)))*(this.posXD-this.ICCxd)+
+					((Math.cos(rotation*time)))*(this.posYD-this.ICCyd)+
+					this.ICCyd;
 		this.teta = this.teta + rotation*time;
 		this.posX= (int)posXD;
 		this.posY= (int)posYD;
+		this.ICCx = (int) ICCxd;
+		this.ICCy = (int) ICCyd;
 		System.out.println("New pos: X="+posX+" Y="+posY+" teta="+teta+", Velocities Vl:"+Vl+", Vr:"+Vr);
 		calculateParams();
 		calculateICC();
