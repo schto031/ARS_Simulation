@@ -11,7 +11,7 @@ public class Runner extends JFrame {
         public RoboPanel(Robo robo) {
             this.robo=robo;
             var executor=new ScheduledThreadPoolExecutor(1);
-            executor.scheduleAtFixedRate(robo,0,1, TimeUnit.MILLISECONDS);
+            executor.scheduleAtFixedRate(robo,0,10, TimeUnit.MILLISECONDS);
             executor.scheduleAtFixedRate(()-> System.out.println(robo),0,1, TimeUnit.SECONDS);
         }
 
@@ -33,14 +33,14 @@ public class Runner extends JFrame {
             @Override
             public void keyPressed(KeyEvent keyEvent) {
                 switch (keyEvent.getKeyChar()){
-                    case 'w': robo.vX++; break;
-                    case 's': robo.vX--; break;
-                    case 'o': robo.vY++; break;
-                    case 'l': robo.vY--; break;
+                    case 'w': robo.vl++; break;
+                    case 's': robo.vl--; break;
+                    case 'o': robo.vr++; break;
+                    case 'l': robo.vr--; break;
                     case 'd': robo.orientation++; break;
                     case 'f': robo.orientation--; break;
-                    case 'x': robo.vX=0; robo.vY=0; break;
-                    case 'r': robo.x=0; robo.y=0; break;
+                    case 'x': robo.vl =0; robo.vr =0; break;
+                    case 'r': robo.x=400;robo.y=300; break;
                     default:
                 }
             }
