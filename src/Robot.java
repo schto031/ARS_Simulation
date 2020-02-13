@@ -44,9 +44,9 @@ public class Robot {
 			rotation = 0;
 		} else if(Vr == -Vl) {
 			R = 0;
-			rotation = (Vr-Vl)/l;
+			rotation = ((double)(Vr-Vl))/l;
 		}else {
-			rotation = (Vr-Vl)/l;
+			rotation = ((double)(Vr-Vl))/l;
 			R= (l/2)*((Vl+Vr)/(Vr-Vl));
 		}
 	}
