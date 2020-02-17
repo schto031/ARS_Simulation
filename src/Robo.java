@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 public class Robo implements Runnable, Drawable {
+	//initialize first position of the robot
     protected Coordinate.Double pos=new Coordinate.Double(400,300);
     private double halfWidth;
     private Coordinate.Double center=new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth);
@@ -36,6 +37,7 @@ public class Robo implements Runnable, Drawable {
             halfWidth=width/2;
             var midX=pos.x+halfWidth;
             var midY=pos.y+halfWidth;
+            //center of the robot circle
             center=new Coordinate.Double(midX, midY);
             graphics.drawLine((int)midX,(int)midY,(int)(midX+halfWidth*Math.cos(-orientation)),(int)(midY-halfWidth*Math.sin(-orientation)));
             drawSensors(graphics, midX, midY);
@@ -106,11 +108,13 @@ public class Robo implements Runnable, Drawable {
     }
 
     private void drawSensors(Graphics2D graphics, double midX, double midY){
+    	//grey and white color
         Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
         var beamStrength=width*4;
         float[] dist={0f,1f};
         var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(midX, midY), (float) beamStrength, dist, colors);
         graphics.setPaint(radialGradientPaint);
+        //determine the position of the 12 sensor lines
         var j=0;
         for(var i=0d;i<Math.PI*2;i+=(Math.PI*2/proximitySensors.length)){
             var line=new Line2D.Double(center, new Point2D.Double(midX+beamStrength*Math.cos(-orientation+i), midY-beamStrength*Math.sin(-orientation+i)));

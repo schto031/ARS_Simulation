@@ -4,6 +4,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Coordinate {
+	
     public static class Double extends Point2D {
         protected double x,y;
         public Double(double x, double y) {
