@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -18,7 +19,7 @@ public class Runner extends JFrame {
             this.robo=robo;
             var executor=new ScheduledThreadPoolExecutor(1);
             executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
-            executor.scheduleWithFixedDelay(()-> System.out.println(robo),0,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
             var rand=new Random();
             rectangle2D=new Line2D.Double(rand.nextInt(200), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
             line2D=new Line2D.Double(rand.nextInt(400), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));

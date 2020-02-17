@@ -2,10 +2,8 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -17,10 +15,11 @@ public class Robo implements Runnable, Drawable {
     protected final double width;
     private final Runnable postUpdateHook;
     private final double delta =0.1;
-    private final double[] proximitySensors=new double[12];
+    final double[] proximitySensors=new double[12];
     private Shape ellipse=new Ellipse2D.Double();
     private List<Line2D> obstacles=new ArrayList<>();
     private ConcurrentHashMap<Line2D, Boolean> shortest=new ConcurrentHashMap<>(obstacles.size());
+    private final double SENSOR_MAX=200;
 
     public Robo(double width, Runnable postUpdateHook) {
         this.width=width;
@@ -72,7 +71,6 @@ public class Robo implements Runnable, Drawable {
                     return a;
                 }).orElse(new Coordinate.Double(0,0));
         magnitude.minus();
-        magnitude.multiply(delta);
         point2D.add(magnitude);
         return point2D;
     }
@@ -109,14 +107,39 @@ public class Robo implements Runnable, Drawable {
 
     private void drawSensors(Graphics2D graphics, double midX, double midY){
         Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
-        var beamStrength=width*3;
+        var beamStrength=width*4;
         float[] dist={0f,1f};
         var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(midX, midY), (float) beamStrength, dist, colors);
         graphics.setPaint(radialGradientPaint);
+        var j=0;
         for(var i=0d;i<Math.PI*2;i+=(Math.PI*2/proximitySensors.length)){
-            graphics.drawLine((int)midX, (int)midY, (int)(midX+beamStrength*Math.cos(-orientation+i)),(int)(midY-beamStrength*Math.sin(-orientation+i)));
+            var line=new Line2D.Double(center, new Point2D.Double(midX+beamStrength*Math.cos(-orientation+i), midY-beamStrength*Math.sin(-orientation+i)));
+            senseDistance(line,j++, beamStrength);
+            graphics.draw(line);
         }
     }
+
+    private void senseDistance(Line2D sensor, int index, double beamStrength){
+        var distance=obstacles.parallelStream()
+                .filter(p->p.intersectsLine(sensor))
+                .mapToDouble(p->getIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
+        distance.ifPresent(d->d=d*SENSOR_MAX/beamStrength);
+        proximitySensors[index]=distance.orElse(SENSOR_MAX);
+    }
+
+    private Point2D getIntersectionPoint(Line2D l1, Line2D l2){
+        var m1=slope(l1);
+        var c1=intercept(l1, m1);
+        var m2=slope(l2);
+        var c2=intercept(l2, m2);
+        var x=(c2-c1)/(m1-m2);
+        var y=m1*x+c1;
+        return new Point2D.Double(x,y);
+    }
+
+    private double slope(Line2D line2D){ return (line2D.getY2()-line2D.getY1())/(line2D.getX2()-line2D.getX1()); }
+
+    private double intercept(Line2D line2D, double slope){ return line2D.getY1() - slope*line2D.getX1(); }
 
     private void drawLine(Graphics2D graphics, Collection<Line2D> line2D){
         graphics.setColor(Color.YELLOW);
