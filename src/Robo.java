@@ -110,8 +110,10 @@ public class Robo implements Runnable, Drawable {
     private void drawSensors(Graphics2D graphics, double midX, double midY){
     	//grey and white color
         Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
+        //length of sensor beams
         var beamStrength=width*4;
         float[] dist={0f,1f};
+        //color fades for sensor beams
         var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(midX, midY), (float) beamStrength, dist, colors);
         graphics.setPaint(radialGradientPaint);
         //determine the position of the 12 sensor lines
@@ -119,11 +121,13 @@ public class Robo implements Runnable, Drawable {
         for(var i=0d;i<Math.PI*2;i+=(Math.PI*2/proximitySensors.length)){
             var line=new Line2D.Double(center, new Point2D.Double(midX+beamStrength*Math.cos(-orientation+i), midY-beamStrength*Math.sin(-orientation+i)));
             senseDistance(line,j++, beamStrength);
+            line = new Line2D.Double(center, new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i)));
             graphics.draw(line);
         }
     }
 
     private void senseDistance(Line2D sensor, int index, double beamStrength){
+    	//distances between obstacle and sensor beam origin
         var distance=obstacles.parallelStream()
                 .filter(p->p.intersectsLine(sensor))
                 .mapToDouble(p->getIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
