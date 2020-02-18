@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
+import java.awt.geom.Line2D.Double;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -15,15 +16,20 @@ public class Runner extends JFrame {
     private static class RoboPanel extends JPanel{
         private volatile Robo robo;
         private Shape rectangle2D,line2D;
+        private Line2D upperBorder,lowerBorder,leftBorder,rightBorder;
         public RoboPanel(Robo robo) {
             this.robo=robo;
             var executor=new ScheduledThreadPoolExecutor(1);
             executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
             executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
             var rand=new Random();
-            rectangle2D=new Line2D.Double(rand.nextInt(200), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
-            line2D=new Line2D.Double(rand.nextInt(400), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
-            robo.setObstacles(List.of((Line2D) line2D,(Line2D) rectangle2D));
+            //rectangle2D=new Line2D.Double(rand.nextInt(200), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
+            //line2D=new Line2D.Double(rand.nextInt(400), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
+            upperBorder = new Line2D.Double(20,20,780,20);
+            lowerBorder = new Line2D.Double(20,380,780,380);
+            leftBorder = new Line2D.Double(20,20,20,380);
+            rightBorder = new Line2D.Double(780,20,780,380);
+			robo.setObstacles(List.of(/* (Line2D) line2D,(Line2D) rectangle2D, */upperBorder,lowerBorder,leftBorder,rightBorder));
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
                 public void mouseDragged(MouseEvent mouseEvent) { }
@@ -40,8 +46,12 @@ public class Runner extends JFrame {
             super.paint(g);
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             robo.draw((Graphics2D) g);
-            ((Graphics2D) g).draw(rectangle2D);
-            ((Graphics2D) g).draw(line2D);
+            //((Graphics2D) g).draw(rectangle2D);
+            //((Graphics2D) g).draw(line2D);
+            ((Graphics2D) g).draw(upperBorder);
+            ((Graphics2D) g).draw(lowerBorder);
+            ((Graphics2D) g).draw(leftBorder);
+            ((Graphics2D) g).draw(rightBorder);
         }
     }
 

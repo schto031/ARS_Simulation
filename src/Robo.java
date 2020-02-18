@@ -124,6 +124,11 @@ public class Robo implements Runnable, Drawable {
             //line length gets adjusted regarding the possibility of hitting obstacle
             line = new Line2D.Double(center, new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i)));
             graphics.draw(line);
+            Point2D distanceStringPosition = new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i));
+            graphics.setPaint(new Color(1,0,0,0.3f));
+            //
+            graphics.drawString( Integer.toString((int)proximitySensors[j-1]) , (int) distanceStringPosition.getX(), (int)distanceStringPosition.getY() );
+            graphics.setPaint(radialGradientPaint);
         }
     }
 
