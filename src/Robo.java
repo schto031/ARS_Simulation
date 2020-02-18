@@ -121,6 +121,7 @@ public class Robo implements Runnable, Drawable {
         for(var i=0d;i<Math.PI*2;i+=(Math.PI*2/proximitySensors.length)){
             var line=new Line2D.Double(center, new Point2D.Double(midX+beamStrength*Math.cos(-orientation+i), midY-beamStrength*Math.sin(-orientation+i)));
             senseDistance(line,j++, beamStrength);
+            //line length gets adjusted regarding the possibility of hitting obstacle
             line = new Line2D.Double(center, new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i)));
             graphics.draw(line);
         }
