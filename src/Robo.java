@@ -28,6 +28,7 @@ public class Robo implements Runnable, Drawable {
         this.postUpdateHook = postUpdateHook;
     }
 
+  //Written by Swapneel
     @Override
     public void draw(Graphics2D g){
         final var graphics = (Graphics2D)g.create();
@@ -47,8 +48,10 @@ public class Robo implements Runnable, Drawable {
         }
     }
 
+  //Written by Swapneel
     public void setObstacles(List<Line2D> obstacles) { this.obstacles = obstacles; }
 
+  //Written by Swapneel
     private boolean collisionFunction(Coordinate.Double p){
         return obstacles.parallelStream().anyMatch(o->{
             var cp=center.getClosestPointOnSegment(o);
@@ -59,6 +62,7 @@ public class Robo implements Runnable, Drawable {
         });
     }
 
+    //Written by Swapneel
     private Coordinate.Double normalize(Line2D line2D){
         var magnitude=line2D.getP1().distance(line2D.getP2());
         var x=(line2D.getX2()-line2D.getX1())/magnitude;
@@ -66,6 +70,7 @@ public class Robo implements Runnable, Drawable {
         return new Coordinate.Double(x,y);
     }
 
+    //Written by Swapneel
     private Coordinate.Double collisionHandler(Coordinate.Double point2D, Stream<Map.Entry<Line2D, Boolean>> filteredCollidingLines){
         var magnitude=filteredCollidingLines.map(c-> normalize(c.getKey()))
                 .reduce((a,d)->{
@@ -77,6 +82,7 @@ public class Robo implements Runnable, Drawable {
         return point2D;
     }
 
+    //Written by Swapneel
     @Override
     public void run() {
         var v=(vl + vr)/2;
@@ -107,6 +113,7 @@ public class Robo implements Runnable, Drawable {
         postUpdateHook.run();
     }
 
+    //written by Swapneel + Tom
     private void drawSensors(Graphics2D graphics, double midX, double midY){
     	//grey and white color
         Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
@@ -136,24 +143,47 @@ public class Robo implements Runnable, Drawable {
     	//distances between obstacle and sensor beam origin
         var distance=obstacles.parallelStream()
                 .filter(p->p.intersectsLine(sensor))
-                .mapToDouble(p->getIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
+                .mapToDouble(p->findIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
         distance.ifPresent(d->d=d*SENSOR_MAX/beamStrength);
         proximitySensors[index]=distance.orElse(SENSOR_MAX);
     }
 
+    
+    //does not treat the case where line is vertical hence only partially functioning
+    //written by Swapneel
     private Point2D getIntersectionPoint(Line2D l1, Line2D l2){
-        var m1=slope(l1);
-        var c1=intercept(l1, m1);
-        var m2=slope(l2);
-        var c2=intercept(l2, m2);
-        var x=(c2-c1)/(m1-m2);
-        var y=m1*x+c1;
-        return new Point2D.Double(x,y);
+    		var m1=slope(l1);
+            //y coordinate where obstacle line intercepts with y axis
+            var c1=intercept(l1, m1);
+            var m2=slope(l2);
+            //y coordinate where sensor line intercepts with y axis
+            var c2=intercept(l2, m2);
+            var x=(c2-c1)/(m1-m2);
+            var y=m1*x+c1;
+            return new Point2D.Double(x,y);
     }
 
-    private double slope(Line2D line2D){ return (line2D.getY2()-line2D.getY1())/(line2D.getX2()-line2D.getX1()); }
-
+    //calculates slope only for non vertical line!!!
+    private double slope(Line2D line2D){ 
+    		return (line2D.getY2()-line2D.getY1())/(line2D.getX2()-line2D.getX1()); 
+    	}
+    
     private double intercept(Line2D line2D, double slope){ return line2D.getY1() - slope*line2D.getX1(); }
+    
+    //finds intersection point no matter what the orientation of the lines
+    //written by Tom Scholer
+    private static Point2D findIntersectionPoint(Line2D l1, Line2D l2) {
+        double a1 = l1.getY2() - l1.getY1();
+        double b1 = l1.getX1() - l1.getX2();
+        double c1 = a1 * l1.getX1() + b1 * l1.getY1();
+ 
+        double a2 = l2.getY2() - l2.getY1();
+        double b2 = l2.getX1()- l2.getX2();
+        double c2 = a2 * l2.getX1() + b2 * l2.getY1();
+ 
+        double delta = a1 * b2 - a2 * b1;
+        return new Point2D.Double((b2 * c1 - b1 * c2) / delta, (a1 * c2 - a2 * c1) / delta);
+    }
 
     private void drawLine(Graphics2D graphics, Collection<Line2D> line2D){
         graphics.setColor(Color.YELLOW);
