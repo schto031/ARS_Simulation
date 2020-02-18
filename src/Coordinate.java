@@ -3,6 +3,7 @@ import java.awt.geom.Point2D;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+//written by Swapneel
 public class Coordinate {
 	
     public static class Double extends Point2D {
