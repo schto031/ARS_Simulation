@@ -1,3 +1,6 @@
+// Written by Tom
+// ignore this class
+
 public class Robot {
 	
 	public int posX;
