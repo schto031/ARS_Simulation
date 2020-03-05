@@ -5,14 +5,15 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class Robo implements Runnable, Drawable {
+public class Robo implements Runnable, Drawable, IRobotMovement {
 	//initialize first position of the robot
     protected Coordinate.Double pos=new Coordinate.Double(400,300);
     private double halfWidth;
     private Coordinate.Double center=new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth);
-    protected double vl, vr, orientation;
+    private double vl, vr, orientation;
     protected final double width;
     private final Runnable postUpdateHook;
     private final double delta =0.1;
@@ -202,4 +203,37 @@ public class Robo implements Runnable, Drawable {
                 ", width=" + width +
                 '}';
     }
+
+    @Override
+    public void incrementLeftVelocity() { vl++; }
+
+    @Override
+    public void incrementRightVelocity() { vr++; }
+
+    @Override
+    public void decrementLeftVelocity() { vl--; }
+
+    @Override
+    public void decrementRightVelocity() { vr--; }
+
+    @Override
+    public void incrementBothVelocity() { vl++; vr++; }
+
+    @Override
+    public void decrementBothVelocity() { vl--; vr--; }
+
+    @Override
+    public void stop() { vl=0; vr=0; }
+
+    @Override
+    public void setPosition(double x, double y) { this.pos.x=x; this.pos.y=y; }
+
+    @Override
+    public void setVelocity(Function<Double, Double> left, Function<Double, Double> right) {
+        this.vl=left.apply(this.vl);
+        this.vr=right.apply(this.vr);
+    }
+
+    @Override
+    public double[] getSensorValues() { return this.proximitySensors; }
 }

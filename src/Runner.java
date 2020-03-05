@@ -79,18 +79,17 @@ public class Runner extends JFrame {
             @Override
             public void keyPressed(KeyEvent keyEvent) {
                 switch (keyEvent.getKeyChar()){
-                    case 'w': robo.vr++; break;
-                    case 's': robo.vr--; break;
-                    case 'o': robo.vl++; break;
-                    case 'l': robo.vl--; break;
-                    case 'd': robo.orientation++; break;
-                    case 'f': robo.orientation--; break;
-                    case 'x': robo.vl =0; robo.vr =0; break;
+                    case 'w': robo.incrementRightVelocity(); break;
+                    case 's': robo.decrementRightVelocity(); break;
+                    case 'o': robo.incrementLeftVelocity(); break;
+                    case 'l': robo.decrementLeftVelocity(); break;
+                    case 'x': robo.stop(); break;
                     case 'r':
                         var bounds=getBounds();
-                        robo.pos.x=(double) bounds.width/2;robo.pos.y=(double) bounds.height/2; break;
-                    case 't': robo.vl++; robo.vr++; break;
-                    case 'g': robo.vl--; robo.vr--;  break;
+                        robo.setPosition((double) bounds.width/2,robo.pos.y=(double) bounds.height/2);
+                        break;
+                    case 't': robo.incrementBothVelocity(); break;
+                    case 'g': robo.decrementBothVelocity();  break;
                     default:
                 }
             }
