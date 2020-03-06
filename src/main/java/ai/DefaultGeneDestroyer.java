@@ -1,3 +1,5 @@
+package ai;
+
 import java.util.Random;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer{

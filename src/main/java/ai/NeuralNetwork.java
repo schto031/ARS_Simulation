@@ -1,3 +1,5 @@
+package ai;
+
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.Arrays;
@@ -14,11 +16,11 @@ public class NeuralNetwork {
         weights=new SimpleMatrix[numberOfNodesPerLayer.length-1];
         var rand=new Random();
         for(var i=0;i<numberOfNodesPerLayer.length;i++){
-            var layer=SimpleMatrix.random(numberOfNodesPerLayer[i],1, 0,1, rand);
+            var layer=SimpleMatrix.random(numberOfNodesPerLayer[i],1, -1,1, rand);
             layers[i]=layer;
         }
         for(var i=0;i<numberOfNodesPerLayer.length-1;i++){
-            var weight=SimpleMatrix.random(numberOfNodesPerLayer[i], numberOfNodesPerLayer[i+1], 0,1, rand);
+            var weight=SimpleMatrix.random(numberOfNodesPerLayer[i], numberOfNodesPerLayer[i+1], -1,1, rand);
             weights[i]=weight;
         }
         this.activation=activation;
@@ -35,6 +37,14 @@ public class NeuralNetwork {
         sb.append(String.format("%d:%dx%d\n",layers.length-1, layers[layers.length-1].getMatrix().numRows, layers[layers.length-1].getMatrix().numCols));
         return sb.toString();
     }
+
+    public void setInput(double ...values){
+        for(var i=0;i<values.length;i++){
+            layers[0].getMatrix().data[i]=values[i];
+        }
+    }
+
+    public double[] getOutput(){ return layers[layers.length-1].getMatrix().getData(); }
 
     public void forwardPropagate(){
         for(var i=0;i<weights.length;i++){
@@ -73,7 +83,7 @@ public class NeuralNetwork {
 
     @Override
     public String toString() {
-        return "NeuralNetwork{" +
+        return "ai.NeuralNetwork{" +
                 "layers=" + Arrays.toString(layers) +
                 ", weights=" + Arrays.toString(weights) +
                 '}'+"\n"+describe();

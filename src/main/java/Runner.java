@@ -1,3 +1,5 @@
+import ai.NeuralNetwork;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -22,9 +24,16 @@ public class Runner extends JFrame {
       //Written by Swapneel + Tom
         public RoboPanel(Robo robo) {
             this.robo=robo;
-            var executor=new ScheduledThreadPoolExecutor(1);
+            var nn=new NeuralNetwork(12,4,2);
+            var executor=new ScheduledThreadPoolExecutor(2);
             executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
-            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
+//            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(()->{
+                nn.setInput(robo.getSensorValues());
+                nn.forwardPropagate();
+                System.out.println(Arrays.toString(nn.getOutput()));
+            },0,800, TimeUnit.MILLISECONDS);
+
             var rand=new Random();
             rectangle2D=new Line2D.Double(rand.nextInt(200), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
             line2D=new Line2D.Double(rand.nextInt(400), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
