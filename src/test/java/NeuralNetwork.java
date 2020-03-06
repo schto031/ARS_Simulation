@@ -2,12 +2,14 @@ import org.ejml.simple.SimpleMatrix;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.function.Function;
 
 public class NeuralNetwork {
     protected SimpleMatrix[] layers;
     protected SimpleMatrix[] weights;
+    private Activation activation;
 
-    public NeuralNetwork(int... numberOfNodesPerLayer) {
+    public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) {
         layers=new SimpleMatrix[numberOfNodesPerLayer.length];
         weights=new SimpleMatrix[numberOfNodesPerLayer.length-1];
         var rand=new Random();
@@ -19,7 +21,10 @@ public class NeuralNetwork {
             var weight=SimpleMatrix.random(numberOfNodesPerLayer[i], numberOfNodesPerLayer[i+1], 0,1, rand);
             weights[i]=weight;
         }
+        this.activation=activation;
     }
+
+    public NeuralNetwork(int... numberOfNodesPerLayer) { this(new Relu() ,numberOfNodesPerLayer); }
 
     private String describe(){
         StringBuilder sb=new StringBuilder();
@@ -34,7 +39,36 @@ public class NeuralNetwork {
     public void forwardPropagate(){
         for(var i=0;i<weights.length;i++){
             layers[i+1]=weights[i].transpose().mult(layers[i]);
+            activation.activate(layers[i+1]);
         }
+    }
+
+    public double[] getGene(int layer){ return weights[layer].getMatrix().getData(); }
+
+    private abstract static class Activation{
+        private Function<Double, Double> function;
+
+        public Activation(Function<Double, Double> function) { this.function = function; }
+
+        public SimpleMatrix activate(SimpleMatrix matrix){
+            for(var i=0;i<matrix.getMatrix().data.length;i++){
+                var data=matrix.getMatrix().data;
+                data[i]=function.apply(data[i]);
+            }
+            return matrix;
+        }
+    }
+
+    private static class Sigmoid extends Activation{
+        public Sigmoid() { super((z)->1/(1+Math.exp(-z))); }
+    }
+
+    private static class Relu extends Activation{
+        public Relu() { super((a)->a<0?0:a); }
+    }
+
+    private static class Tanh extends Activation{
+        public Tanh() { super(Math::tanh); }
     }
 
     @Override

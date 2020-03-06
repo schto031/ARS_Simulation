@@ -8,9 +8,7 @@ public class TestNeuralNetwork {
         var numberOfHiddenNodes=4;
         var numberOfOutputNodes=2;
         var numberOfInputNodes=numberOfSensorsNodes+numberOfHiddenNodes;
-        var nn=new NeuralNetwork(numberOfInputNodes, numberOfOutputNodes, numberOfHiddenNodes);
-        System.out.println(nn.layers[1]);
+        var nn=new NeuralNetwork(numberOfInputNodes, numberOfHiddenNodes, numberOfOutputNodes);
         nn.forwardPropagate();
-
     }
 }
