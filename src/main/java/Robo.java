@@ -12,7 +12,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 	//initialize first position of the robot
     protected Coordinate.Double pos=new Coordinate.Double(400,300);
     private double halfWidth;
-    private Coordinate.Double center=new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth);
+    private Coordinate.Double center;
     private double vl, vr, orientation;
     protected final double width;
     private final Runnable postUpdateHook;
@@ -30,6 +30,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         this.halfWidth=width/2;
         this.postUpdateHook = postUpdateHook;
         this.id=id;
+        this.center=new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth);
     }
 
     public Robo(double width, Runnable postUpdateHook) { this(width,postUpdateHook,new Random().nextInt()); }

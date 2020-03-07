@@ -29,13 +29,13 @@ public class Runner extends JFrame {
             setPreferredSize(new Dimension(800,600));
             setLayout(null);
 
-            // Initalize controllers
-            controllers=new NeuralNetwork[robo.length];
-            for(var i=0;i<controllers.length;i++){
-                var nn=new NeuralNetwork(12,4,2);
-                controllers[i]=nn;
-                nn.setInputByReference(robo[i].proximitySensors);   // hook up proximity sensors to input of nn
-            }
+            obstacles= Arena.getBoxedArena(getBounds());
+            // Set all obstacles
+            Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
+            // Initalize robots with random velocities
+            Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()*10-5, (_vr)->Math.random()*10-5));
+
+
             var executor=new ScheduledThreadPoolExecutor(4);
             // Robots position calculation thread
             Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));
@@ -43,8 +43,18 @@ public class Runner extends JFrame {
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
             executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),0,1, TimeUnit.SECONDS);
+            // Initalize controllers
+            controllers=new NeuralNetwork[robo.length];
+            for(var i=0;i<controllers.length;i++){
+                var nn=new NeuralNetwork(12,4,2);
+                controllers[i]=nn;
+                nn.setInputByReference(robo[i].proximitySensors);   // hook up proximity sensors to input of nn
+            }
+            // Controller debug thread
             executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getInput())),0,1, TimeUnit.SECONDS);
+            // Set a threshold above which NN is triggered
             var threshold=10;
+            // NN control thread
             Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(()->{
                 var controller=controllers[r.getId()];
                 controller.forwardPropagate();
@@ -54,12 +64,6 @@ public class Runner extends JFrame {
                 if(outputs[1]>threshold) r.incrementRightVelocity();
                 else r.decrementRightVelocity();
             },0,8, TimeUnit.MILLISECONDS));
-
-            obstacles= Arena.getBoxedArena(getBounds());
-            // Set all obstacles
-			Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
-			// Initalize robots with random velocities
-            Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()*10-5, (_vr)->Math.random()*10-5));
 
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
