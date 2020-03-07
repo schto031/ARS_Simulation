@@ -17,13 +17,15 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Runner extends JFrame {
+    private static final byte NUMBER_OF_ROBOTS=16;
+
     private static class RoboPanel extends JPanel{
 
         private Robo[] robots;
         private NeuralNetwork[] controllers;
         private List<Line2D> obstacles;
         
-      //Written by Swapneel + Tom
+        //Written by Swapneel + Tom
         public RoboPanel(Robo... robo) {
             this.robots=robo;
             setPreferredSize(new Dimension(800,600));
@@ -33,25 +35,20 @@ public class Runner extends JFrame {
             // Set all obstacles
             Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
             // Initalize robots with random velocities
-            Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()*10-5, (_vr)->Math.random()*10-5));
-
-
-            var executor=new ScheduledThreadPoolExecutor(4);
+            Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()-0.5, (_vr)->Math.random()-0.5));
+            // Initialize a scheduler
+            var executor=new ScheduledThreadPoolExecutor(8);
             // Robots position calculation thread
-            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));
+            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,500,8, TimeUnit.MILLISECONDS));
             // Display thread
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
-            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),0,1, TimeUnit.SECONDS);
-            // Initalize controllers
-            controllers=new NeuralNetwork[robo.length];
-            for(var i=0;i<controllers.length;i++){
-                var nn=new NeuralNetwork(12,4,2);
-                controllers[i]=nn;
-                nn.setInputByReference(robo[i].proximitySensors);   // hook up proximity sensors to input of nn
-            }
+            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),1,1, TimeUnit.SECONDS);
+            // Initialize neural network for every bot
+            controllers=new NeuralNetwork[robots.length];
+            initializeNeuralNetwork();
             // Controller debug thread
-            executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getInput())),0,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getInput())),1,1, TimeUnit.SECONDS);
             // Set a threshold above which NN is triggered
             var threshold=10;
             // NN control thread
@@ -75,15 +72,24 @@ public class Runner extends JFrame {
         }
 
         @Override
-      //Written by Swapneel + Tom
+        //Written by Swapneel + Tom
         public void paint(Graphics g) {
             super.paint(g);
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             Arrays.stream(robots).forEach(r->r.draw((Graphics2D) g));
             obstacles.forEach(((Graphics2D) g)::draw);
         }
+
+        private void initializeNeuralNetwork(){
+
+            for(var i=0;i<controllers.length;i++){
+                var nn=new NeuralNetwork(12,4,2);
+                controllers[i]=nn;
+                nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
+            }
+        }
     }
-  //Written by Swapneel
+    //Written by Swapneel
     private Runner() {
         setTitle("Low budget robot simulator");
         var menu=new JMenu("Options");
@@ -94,15 +100,15 @@ public class Runner extends JFrame {
         menuBar.add(menu);
         setJMenuBar(menuBar);
 
-        var numberOfBots=10;
         // Initialize robots
-        var bots=new Robo[numberOfBots];
-        for(var i=0;i<numberOfBots;i++){
+        var bots=new Robo[NUMBER_OF_ROBOTS];
+        for(var i=0;i<NUMBER_OF_ROBOTS;i++){
             var robo=new Robo(36, null, i);
             bots[i]=robo;
         }
         var robo=bots[0];
         add(new RoboPanel(bots));
+
         pack();
         var bounds=getBounds();
         addKeyListener(new KeyListener() {
