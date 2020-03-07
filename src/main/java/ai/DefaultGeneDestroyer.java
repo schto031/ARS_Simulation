@@ -1,5 +1,7 @@
 package ai;
 
+import util.Utilities;
+
 import java.util.Random;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer{
@@ -14,11 +16,12 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
 
     @Override
     public void mutate(NeuralNetwork nn) {
+        var rand=new Random();
         for(var w:nn.weights){
             var data=w.getMatrix().data;
             for(var i=0;i<data.length;i++){
                 if(random.nextDouble()<mutationProbability){
-                    data[i]=rand(-5,5);
+                    data[i]= Utilities.rand(rand,-5,5);
                 }
             }
         }
@@ -41,5 +44,4 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
         }
     }
 
-    private double rand(double min, double max){ return random.nextDouble()*(max-min)-min; }
 }

@@ -16,11 +16,12 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private double vl, vr, orientation;
     protected final double width;
     private final Runnable postUpdateHook;
-    private final double delta =0.1;
+    private final double delta =0.05;
     final double[] proximitySensors=new double[12];
     private Shape ellipse=new Ellipse2D.Double();
     private List<Line2D> obstacles=new ArrayList<>();
     private ConcurrentHashMap<Line2D, Boolean> shortest=new ConcurrentHashMap<>(obstacles.size());
+    private Point2D[] dust;
     private final int id;
     private final double SENSOR_MAX=200;
     private final double VELOCITY_MAX=20;

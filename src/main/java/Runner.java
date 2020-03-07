@@ -1,5 +1,6 @@
 import ai.Arena;
 import ai.NeuralNetwork;
+import util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,8 +9,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -20,22 +25,21 @@ public class Runner extends JFrame {
         private Robo[] robots;
         private NeuralNetwork[] controllers;
         private List<Line2D> obstacles;
-        
+        private Point2D[] dust=new Point2D[1000];
+
         //Written by Swapneel + Tom
         public RoboPanel(Robo... robo) {
             this.robots=robo;
             setPreferredSize(new Dimension(800,600));
-//            setLayout(null);
-
             obstacles= Arena.getBoxedArena(getBounds());
             // Set all obstacles
             Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
             // Initalize robots with random velocities
             Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()-0.5, (_vr)->Math.random()-0.5));
             // Initialize a scheduler
-            var executor=new ScheduledThreadPoolExecutor(8);
+            var executor=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
             // Robots position calculation thread
-            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,500,8, TimeUnit.MILLISECONDS));
+            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));
             // Display thread
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
@@ -48,7 +52,7 @@ public class Runner extends JFrame {
             // Set a threshold above which NN is triggered
             var threshold=10;
             // NN control thread
-            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(()->{
+            Arrays.stream(robo).forEach(r->executor.scheduleWithFixedDelay(()->{
                 var controller=controllers[r.getId()];
                 controller.forwardPropagate();
                 var outputs=controller.getOutput();
@@ -56,7 +60,7 @@ public class Runner extends JFrame {
                 else r.decrementLeftVelocity();
                 if(outputs[1]>threshold) r.incrementRightVelocity();
                 else r.decrementRightVelocity();
-            },0,8, TimeUnit.MILLISECONDS));
+            },1500,8, TimeUnit.MILLISECONDS));
 
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
@@ -76,6 +80,20 @@ public class Runner extends JFrame {
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             Arrays.stream(robots).forEach(r->r.draw((Graphics2D) g));
             obstacles.forEach(((Graphics2D) g)::draw);
+            Arrays.stream(dust).parallel().filter(Objects::nonNull).forEach(d->{
+                // No method to directly draw a point?! Another of java's quirks
+                var p=new Line2D.Double(d,d);
+                ((Graphics2D) g).draw(p);
+            });
+        }
+
+        @Override
+        public void setPreferredSize(Dimension preferredSize) {
+            super.setPreferredSize(preferredSize);
+            var rand=new Random();
+            var r=new Rectangle(preferredSize);
+            for(var i=0;i<dust.length;i++){ dust[i]=Utilities.rand(rand, r); }
+
         }
 
         private void initializeNeuralNetwork(){
