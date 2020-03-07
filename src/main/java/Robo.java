@@ -21,14 +21,18 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private Shape ellipse=new Ellipse2D.Double();
     private List<Line2D> obstacles=new ArrayList<>();
     private ConcurrentHashMap<Line2D, Boolean> shortest=new ConcurrentHashMap<>(obstacles.size());
+    private final int id;
     private final double SENSOR_MAX=200;
     private final double VELOCITY_MAX=20;
 
-    public Robo(double width, Runnable postUpdateHook) {
+    public Robo(double width, Runnable postUpdateHook, int id) {
         this.width=width;
         this.halfWidth=width/2;
         this.postUpdateHook = postUpdateHook;
+        this.id=id;
     }
+
+    public Robo(double width, Runnable postUpdateHook) { this(width,postUpdateHook,new Random().nextInt()); }
 
   //Written by Swapneel
     @Override
@@ -115,7 +119,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                     point2D -> collisionHandler(point2D, collidingLines));
             orientation+=omega*delta;
         }
-        postUpdateHook.run();
+        if(null!=postUpdateHook) postUpdateHook.run();
     }
 
     //written by Swapneel + Tom
@@ -174,6 +178,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         shortest.clear();
     }
 
+    public int getId() { return id; }
+
     @Override
     public String toString() {
         return "Robo{" +
@@ -184,26 +190,27 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                 ", orientation=" + orientation +
                 ", width=" + width +
                 ", obstacles="+obstacles.size()+
+                ", id="+id+
                 '}';
     }
 
     @Override
-    public void incrementLeftVelocity() { vl++; }
+    public void incrementLeftVelocity() { if(vl<this.VELOCITY_MAX) vl++; }
 
     @Override
-    public void incrementRightVelocity() { vr++; }
+    public void incrementRightVelocity() { if(vr<this.VELOCITY_MAX) vr++; }
 
     @Override
-    public void decrementLeftVelocity() { vl--; }
+    public void decrementLeftVelocity() { if(vl>-this.VELOCITY_MAX) vl--; }
 
     @Override
-    public void decrementRightVelocity() { vr--; }
+    public void decrementRightVelocity() { if(vr>-this.VELOCITY_MAX) vr--; }
 
     @Override
-    public void incrementBothVelocity() { vl++; vr++; }
+    public void incrementBothVelocity() { incrementLeftVelocity(); incrementRightVelocity(); }
 
     @Override
-    public void decrementBothVelocity() { vl--; vr--; }
+    public void decrementBothVelocity() { decrementLeftVelocity(); decrementRightVelocity(); }
 
     @Override
     public void stop() { vl=0; vr=0; }

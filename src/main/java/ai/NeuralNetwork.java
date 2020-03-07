@@ -38,10 +38,18 @@ public class NeuralNetwork implements Cloneable {
         return sb.toString();
     }
 
-    public void setInput(double ...values){
+    public void setInputByValue(double ...values){
         for(var i=0;i<values.length;i++){
             layers[0].getMatrix().data[i]=values[i];
         }
+    }
+
+    public double[] getInput() {
+        return layers[0].getMatrix().data;
+    }
+
+    public void setInputByReference(double ...values){
+        layers[0].getMatrix().data=values;
     }
 
     public double[] getOutput(){ return layers[layers.length-1].getMatrix().getData(); }

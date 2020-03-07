@@ -34,6 +34,7 @@ public class Runner extends JFrame {
             for(var i=0;i<controllers.length;i++){
                 var nn=new NeuralNetwork(12,4,2);
                 controllers[i]=nn;
+                nn.setInputByReference(robo[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
             var executor=new ScheduledThreadPoolExecutor(4);
             // Robots position calculation thread
@@ -42,6 +43,18 @@ public class Runner extends JFrame {
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
             executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),0,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getInput())),0,1, TimeUnit.SECONDS);
+            var threshold=10;
+            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(()->{
+                var controller=controllers[r.getId()];
+                controller.forwardPropagate();
+                var outputs=controller.getOutput();
+                if(outputs[0]>threshold) r.incrementLeftVelocity();
+                else r.decrementLeftVelocity();
+                if(outputs[1]>threshold) r.incrementRightVelocity();
+                else r.decrementRightVelocity();
+            },0,8, TimeUnit.MILLISECONDS));
+
             obstacles= Arena.getBoxedArena(getBounds());
             // Set all obstacles
 			Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
@@ -81,7 +94,7 @@ public class Runner extends JFrame {
         // Initialize robots
         var bots=new Robo[numberOfBots];
         for(var i=0;i<numberOfBots;i++){
-            var robo=new Robo(36, ()->{});
+            var robo=new Robo(36, null, i);
             bots[i]=robo;
         }
         var robo=bots[0];
