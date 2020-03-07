@@ -8,11 +8,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
-import java.awt.geom.Line2D.Double;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +17,6 @@ public class Runner extends JFrame {
     private static final byte NUMBER_OF_ROBOTS=16;
 
     private static class RoboPanel extends JPanel{
-
         private Robo[] robots;
         private NeuralNetwork[] controllers;
         private List<Line2D> obstacles;
@@ -29,7 +25,7 @@ public class Runner extends JFrame {
         public RoboPanel(Robo... robo) {
             this.robots=robo;
             setPreferredSize(new Dimension(800,600));
-            setLayout(null);
+//            setLayout(null);
 
             obstacles= Arena.getBoxedArena(getBounds());
             // Set all obstacles
@@ -69,6 +65,8 @@ public class Runner extends JFrame {
                 @Override
                 public void mouseMoved(MouseEvent mouseEvent) { System.out.println(mouseEvent.getLocationOnScreen()); }
             });
+            var panel=new DebugPanel(controllers);
+            add(panel);
         }
 
         @Override
@@ -81,7 +79,6 @@ public class Runner extends JFrame {
         }
 
         private void initializeNeuralNetwork(){
-
             for(var i=0;i<controllers.length;i++){
                 var nn=new NeuralNetwork(12,4,2);
                 controllers[i]=nn;
