@@ -1,3 +1,4 @@
+import ai.Arena;
 import ai.NeuralNetwork;
 
 import javax.swing.*;
@@ -8,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Line2D.Double;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -16,40 +18,42 @@ import java.util.concurrent.TimeUnit;
 
 public class Runner extends JFrame {
     private static class RoboPanel extends JPanel{
-    	
-        private volatile Robo robo;
-        private Shape rectangle2D,line2D;
-        private Line2D upperBorder,lowerBorder,leftBorder,rightBorder;
+
+        private Robo[] robots;
+        private NeuralNetwork[] controllers;
+        private List<Line2D> obstacles;
         
       //Written by Swapneel + Tom
-        public RoboPanel(Robo robo) {
-            this.robo=robo;
-            var nn=new NeuralNetwork(12,4,2);
-            var executor=new ScheduledThreadPoolExecutor(2);
-            executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
-//            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
-            executor.scheduleAtFixedRate(()->{
-                nn.setInput(robo.getSensorValues());
-                nn.forwardPropagate();
-                System.out.println(Arrays.toString(nn.getOutput()));
-            },0,800, TimeUnit.MILLISECONDS);
+        public RoboPanel(Robo... robo) {
+            this.robots=robo;
+            setPreferredSize(new Dimension(800,600));
+            setLayout(null);
 
-            var rand=new Random();
-            rectangle2D=new Line2D.Double(rand.nextInt(200), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
-            line2D=new Line2D.Double(rand.nextInt(400), rand.nextInt(800), rand.nextInt(100), rand.nextInt(150));
-            upperBorder = new Line2D.Double(20,20,780,20);
-            lowerBorder = new Line2D.Double(20,380,780,380);
-            leftBorder = new Line2D.Double(20,20,20,380);
-            rightBorder = new Line2D.Double(780,20,780,380);
-			robo.setObstacles(List.of((Line2D) line2D,(Line2D) rectangle2D, upperBorder,lowerBorder,leftBorder,rightBorder));
+            // Initalize controllers
+            controllers=new NeuralNetwork[robo.length];
+            for(var i=0;i<controllers.length;i++){
+                var nn=new NeuralNetwork(12,4,2);
+                controllers[i]=nn;
+            }
+            var executor=new ScheduledThreadPoolExecutor(4);
+            // Robots position calculation thread
+            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));
+            // Display thread
+            executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
+            // Printing thread
+            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),0,1, TimeUnit.SECONDS);
+            obstacles= Arena.getBoxedArena(getBounds());
+            // Set all obstacles
+			Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
+			// Initalize robots with random velocities
+            Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()*10-5, (_vr)->Math.random()*10-5));
+
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
                 public void mouseDragged(MouseEvent mouseEvent) { }
 
                 @Override
-                public void mouseMoved(MouseEvent mouseEvent) {
-                    System.out.println(mouseEvent.getLocationOnScreen());
-                }
+                public void mouseMoved(MouseEvent mouseEvent) { System.out.println(mouseEvent.getLocationOnScreen()); }
             });
         }
 
@@ -58,18 +62,12 @@ public class Runner extends JFrame {
         public void paint(Graphics g) {
             super.paint(g);
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            robo.draw((Graphics2D) g);
-            ((Graphics2D) g).draw(rectangle2D);
-            ((Graphics2D) g).draw(line2D);
-            ((Graphics2D) g).draw(upperBorder);
-            ((Graphics2D) g).draw(lowerBorder);
-            ((Graphics2D) g).draw(leftBorder);
-            ((Graphics2D) g).draw(rightBorder);
+            Arrays.stream(robots).forEach(r->r.draw((Graphics2D) g));
+            obstacles.forEach(((Graphics2D) g)::draw);
         }
     }
   //Written by Swapneel
     private Runner() {
-        setSize(new Dimension(800,600));
         setTitle("Low budget robot simulator");
         var menu=new JMenu("Options");
         var menuBar=new JMenuBar();
@@ -79,8 +77,17 @@ public class Runner extends JFrame {
         menuBar.add(menu);
         setJMenuBar(menuBar);
 
-        var robo=new Robo(36, ()->SwingUtilities.invokeLater(this::repaint));
-        add(new RoboPanel(robo));
+        var numberOfBots=10;
+        // Initialize robots
+        var bots=new Robo[numberOfBots];
+        for(var i=0;i<numberOfBots;i++){
+            var robo=new Robo(36, ()->{});
+            bots[i]=robo;
+        }
+        var robo=bots[0];
+        add(new RoboPanel(bots));
+        pack();
+        var bounds=getBounds();
         addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent keyEvent) { }
@@ -93,12 +100,10 @@ public class Runner extends JFrame {
                     case 'o': robo.incrementLeftVelocity(); break;
                     case 'l': robo.decrementLeftVelocity(); break;
                     case 'x': robo.stop(); break;
-                    case 'r':
-                        var bounds=getBounds();
-                        robo.setPosition((double) bounds.width/2,robo.pos.y=(double) bounds.height/2);
-                        break;
+                    case 'r': Arrays.stream(bots).forEach(b->b.setPosition(bounds.getCenterX(),bounds.getCenterY()));  break;
                     case 't': robo.incrementBothVelocity(); break;
                     case 'g': robo.decrementBothVelocity();  break;
+                    case 'b': robo.setPosition(bounds.getCenterX(),bounds.getCenterY()); break;
                     default:
                 }
             }
@@ -106,7 +111,7 @@ public class Runner extends JFrame {
             @Override
             public void keyReleased(KeyEvent keyEvent) { }
         });
-        getRootPane().registerKeyboardAction(e->{ System.exit(0); }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e->System.exit(0), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 

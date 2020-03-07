@@ -6,10 +6,10 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Function;
 
-public class NeuralNetwork {
+public class NeuralNetwork implements Cloneable {
     protected SimpleMatrix[] layers;
     protected SimpleMatrix[] weights;
-    private Activation activation;
+    private final Activation activation;
 
     public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) {
         layers=new SimpleMatrix[numberOfNodesPerLayer.length];
@@ -55,6 +55,12 @@ public class NeuralNetwork {
 
     public double[] getGene(int layer){ return weights[layer].getMatrix().getData(); }
 
+    protected int[] getConfiguration(){
+        var config=new int[layers.length];
+        for(var i=0;i<layers.length;i++) config[i]=layers[i].getMatrix().data.length;
+        return config;
+    }
+
     private abstract static class Activation{
         private Function<Double, Double> function;
 
@@ -79,6 +85,11 @@ public class NeuralNetwork {
 
     private static class Tanh extends Activation{
         public Tanh() { super(Math::tanh); }
+    }
+
+    @Override
+    protected NeuralNetwork clone() throws CloneNotSupportedException {
+        return new NeuralNetwork(activation, getConfiguration());
     }
 
     @Override

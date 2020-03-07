@@ -22,6 +22,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private List<Line2D> obstacles=new ArrayList<>();
     private ConcurrentHashMap<Line2D, Boolean> shortest=new ConcurrentHashMap<>(obstacles.size());
     private final double SENSOR_MAX=200;
+    private final double VELOCITY_MAX=20;
 
     public Robo(double width, Runnable postUpdateHook) {
         this.width=width;
@@ -50,7 +51,10 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     }
 
   //Written by Swapneel
-    public void setObstacles(List<Line2D> obstacles) { this.obstacles = obstacles; }
+    public void setObstacles(List<Line2D> obstacles) {
+        this.obstacles = obstacles;
+        shortest=new ConcurrentHashMap<>(obstacles.size());
+    }
 
   //Written by Swapneel
     private boolean collisionFunction(Coordinate.Double p){
@@ -149,28 +153,6 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         proximitySensors[index]=distance.orElse(SENSOR_MAX);
     }
 
-    
-    //does not treat the case where line is vertical hence only partially functioning
-    //written by Swapneel
-    private Point2D getIntersectionPoint(Line2D l1, Line2D l2){
-    		var m1=slope(l1);
-            //y coordinate where obstacle line intercepts with y axis
-            var c1=intercept(l1, m1);
-            var m2=slope(l2);
-            //y coordinate where sensor line intercepts with y axis
-            var c2=intercept(l2, m2);
-            var x=(c2-c1)/(m1-m2);
-            var y=m1*x+c1;
-            return new Point2D.Double(x,y);
-    }
-
-    //calculates slope only for non vertical line!!!
-    private double slope(Line2D line2D){ 
-    		return (line2D.getY2()-line2D.getY1())/(line2D.getX2()-line2D.getX1()); 
-    	}
-    
-    private double intercept(Line2D line2D, double slope){ return line2D.getY1() - slope*line2D.getX1(); }
-    
     //finds intersection point no matter what the orientation of the lines
     //written by Tom Scholer
     private static Point2D findIntersectionPoint(Line2D l1, Line2D l2) {
@@ -201,6 +183,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                 ", vY=" + vr +
                 ", orientation=" + orientation +
                 ", width=" + width +
+                ", obstacles="+obstacles.size()+
                 '}';
     }
 
