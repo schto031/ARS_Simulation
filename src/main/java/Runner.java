@@ -1,7 +1,8 @@
-import ai.Arena;
 import ai.IRobotController;
 import ai.NeuralNetwork;
-import util.Utilities;
+import ai.RecurrentNeuralNetwork;
+import common.Arena;
+import common.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,7 +12,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -46,10 +46,10 @@ public class Runner extends JFrame {
             // Printing thread
             executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),1,1, TimeUnit.SECONDS);
             // Initialize neural network for every bot
-            controllers=new NeuralNetwork[robots.length];
+            controllers=new IRobotController[robots.length];
             initializeNeuralNetwork();
             // Controller debug thread
-            executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getInput())),1,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getOutput())),1,1, TimeUnit.SECONDS);
             // Set a threshold above which NN is triggered
             var threshold=10;
             // NN control thread
@@ -81,7 +81,7 @@ public class Runner extends JFrame {
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             Arrays.stream(robots).forEach(r->r.draw((Graphics2D) g));
             obstacles.forEach(((Graphics2D) g)::draw);
-            Arrays.stream(dust).parallel().filter(Objects::nonNull).forEach(d->{
+            Arrays.stream(dust).filter(Objects::nonNull).forEach(d->{
                 // No method to directly draw a point?! Another of java's quirks
                 var p=new Line2D.Double(d,d);
                 ((Graphics2D) g).draw(p);
@@ -98,7 +98,8 @@ public class Runner extends JFrame {
 
         private void initializeNeuralNetwork(){
             for(var i=0;i<controllers.length;i++){
-                var nn=new NeuralNetwork(12,4,2);
+//                var nn=new NeuralNetwork(12,4,2);
+                var nn=new RecurrentNeuralNetwork(1, 50, new int[]{12,4,2});
                 controllers[i]=nn;
                 nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }

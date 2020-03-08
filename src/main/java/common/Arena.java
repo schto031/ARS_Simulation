@@ -1,4 +1,4 @@
-package ai;
+package common;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;

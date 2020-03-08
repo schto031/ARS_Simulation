@@ -1,3 +1,5 @@
+import common.Coordinate;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;

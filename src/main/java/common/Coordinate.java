@@ -1,3 +1,5 @@
+package common;
+
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.function.Function;
@@ -7,7 +9,7 @@ import java.util.function.Predicate;
 public class Coordinate {
 	
     public static class Double extends Point2D {
-        protected double x,y;
+        public double x,y;
         public Double(double x, double y) {
             this.x = x;
             this.y = y;

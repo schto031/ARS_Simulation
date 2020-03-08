@@ -5,7 +5,6 @@ import org.ejml.simple.SimpleMatrix;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.function.Function;
 
 public class NeuralNetwork extends RobotController implements Cloneable, IRobotController {
         public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) {
@@ -52,6 +51,7 @@ public class NeuralNetwork extends RobotController implements Cloneable, IRobotC
     }
 
     public void setInputByReference(double ...values){
+        if(values.length!=getInput().length) throw new IllegalArgumentException(String.format("Input layer dimensions must match! %d vs %d",values.length,getInput().length));
         layers[0].getMatrix().data=values;
     }
 
@@ -72,32 +72,6 @@ public class NeuralNetwork extends RobotController implements Cloneable, IRobotC
         var config=new int[layers.length];
         for(var i=0;i<layers.length;i++) config[i]=layers[i].getMatrix().data.length;
         return config;
-    }
-
-    abstract static class Activation{
-        private Function<Double, Double> function;
-
-        public Activation(Function<Double, Double> function) { this.function = function; }
-
-        public SimpleMatrix activate(SimpleMatrix matrix){
-            for(var i=0;i<matrix.getMatrix().data.length;i++){
-                var data=matrix.getMatrix().data;
-                data[i]=function.apply(data[i]);
-            }
-            return matrix;
-        }
-    }
-
-    static class Sigmoid extends Activation{
-        public Sigmoid() { super((z)->1/(1+Math.exp(-z))); }
-    }
-
-    static class Relu extends Activation{
-        public Relu() { super((a)->a<0?0:a); }
-    }
-
-    static class Tanh extends Activation{
-        public Tanh() { super(Math::tanh); }
     }
 
     @Override
