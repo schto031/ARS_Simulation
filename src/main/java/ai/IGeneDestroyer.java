@@ -1,6 +1,6 @@
 package ai;
 
 public interface IGeneDestroyer {
-    void mutate(NeuralNetwork nn);
-    void crossover(NeuralNetwork a, NeuralNetwork b);
+    void mutate(RobotController nn);
+    void crossover(RobotController a, RobotController b);
 }

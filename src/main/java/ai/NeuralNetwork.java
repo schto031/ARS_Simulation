@@ -2,16 +2,21 @@ package ai;
 
 import org.ejml.simple.SimpleMatrix;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Function;
 
-public class NeuralNetwork implements Cloneable {
-    protected SimpleMatrix[] layers;
-    protected SimpleMatrix[] weights;
-    private final Activation activation;
+public class NeuralNetwork extends RobotController implements Cloneable, IRobotController {
+        public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) {
+        super(activation);
+        initializeRandomArray(numberOfNodesPerLayer);
+    }
 
-    public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) {
+    public NeuralNetwork(int... numberOfNodesPerLayer) { this(new Relu() ,numberOfNodesPerLayer); }
+    NeuralNetwork(Activation activation){ super(activation); }
+
+    void initializeRandomArray(int... numberOfNodesPerLayer){
         layers=new SimpleMatrix[numberOfNodesPerLayer.length];
         weights=new SimpleMatrix[numberOfNodesPerLayer.length-1];
         var rand=new Random();
@@ -23,10 +28,7 @@ public class NeuralNetwork implements Cloneable {
             var weight=SimpleMatrix.random(numberOfNodesPerLayer[i], numberOfNodesPerLayer[i+1], -1,1, rand);
             weights[i]=weight;
         }
-        this.activation=activation;
     }
-
-    public NeuralNetwork(int... numberOfNodesPerLayer) { this(new Relu() ,numberOfNodesPerLayer); }
 
     private String describe(){
         StringBuilder sb=new StringBuilder();
@@ -44,6 +46,7 @@ public class NeuralNetwork implements Cloneable {
         }
     }
 
+    @Override
     public double[] getInput() {
         return layers[0].getMatrix().data;
     }
@@ -52,8 +55,10 @@ public class NeuralNetwork implements Cloneable {
         layers[0].getMatrix().data=values;
     }
 
+    @Override
     public double[] getOutput(){ return layers[layers.length-1].getMatrix().getData(); }
 
+    @Override
     public void forwardPropagate(){
         for(var i=0;i<weights.length;i++){
             layers[i+1]=weights[i].transpose().mult(layers[i]);
@@ -69,7 +74,7 @@ public class NeuralNetwork implements Cloneable {
         return config;
     }
 
-    private abstract static class Activation{
+    abstract static class Activation{
         private Function<Double, Double> function;
 
         public Activation(Function<Double, Double> function) { this.function = function; }
@@ -83,21 +88,35 @@ public class NeuralNetwork implements Cloneable {
         }
     }
 
-    private static class Sigmoid extends Activation{
+    static class Sigmoid extends Activation{
         public Sigmoid() { super((z)->1/(1+Math.exp(-z))); }
     }
 
-    private static class Relu extends Activation{
+    static class Relu extends Activation{
         public Relu() { super((a)->a<0?0:a); }
     }
 
-    private static class Tanh extends Activation{
+    static class Tanh extends Activation{
         public Tanh() { super(Math::tanh); }
     }
 
     @Override
     protected NeuralNetwork clone() throws CloneNotSupportedException {
         return new NeuralNetwork(activation, getConfiguration());
+    }
+
+    public void dump(String filename) throws IOException {
+        var dumpLocation=System.getProperty("DUMP_LOCATION")+"/"+filename;
+        try(var fos=new FileOutputStream(dumpLocation); var oos=new ObjectOutputStream(fos)){
+            oos.writeObject(this);
+        }
+    }
+
+    public static NeuralNetwork load(String filename) throws IOException, ClassNotFoundException {
+        var dumpLocation=System.getProperty("DUMP_LOCATION")+"/"+filename;
+        try(var fis=new FileInputStream(dumpLocation); var oos=new ObjectInputStream(fis)){
+            return (NeuralNetwork) oos.readObject();
+        }
     }
 
     @Override

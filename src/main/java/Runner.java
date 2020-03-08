@@ -1,4 +1,5 @@
 import ai.Arena;
+import ai.IRobotController;
 import ai.NeuralNetwork;
 import util.Utilities;
 
@@ -23,9 +24,9 @@ public class Runner extends JFrame {
 
     private static class RoboPanel extends JPanel{
         private Robo[] robots;
-        private NeuralNetwork[] controllers;
+        private IRobotController[] controllers;
         private List<Line2D> obstacles;
-        private Point2D[] dust=new Point2D[1000];
+        private Point2D[] dust=new Point2D[5000];
 
         //Written by Swapneel + Tom
         public RoboPanel(Robo... robo) {
@@ -93,7 +94,6 @@ public class Runner extends JFrame {
             var rand=new Random();
             var r=new Rectangle(preferredSize);
             for(var i=0;i<dust.length;i++){ dust[i]=Utilities.rand(rand, r); }
-
         }
 
         private void initializeNeuralNetwork(){

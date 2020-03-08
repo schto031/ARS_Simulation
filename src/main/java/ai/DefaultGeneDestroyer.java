@@ -15,7 +15,7 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
     }
 
     @Override
-    public void mutate(NeuralNetwork nn) {
+    public void mutate(RobotController nn) {
         var rand=new Random();
         for(var w:nn.weights){
             var data=w.getMatrix().data;
@@ -28,7 +28,7 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
     }
 
     @Override
-    public void crossover(NeuralNetwork a, NeuralNetwork b) {
+    public void crossover(RobotController a, RobotController b) {
         if(a.weights.length!=b.weights.length) throw new IllegalArgumentException("Incompatible networks for crossover! "+a.weights.length+" vs "+b.weights.length);
         for(var i=0;i<a.weights.length;i++){
             var aa=a.weights[i].getMatrix().data;
@@ -43,5 +43,4 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
             }
         }
     }
-
 }
