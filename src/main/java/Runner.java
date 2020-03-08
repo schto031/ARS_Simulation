@@ -27,7 +27,7 @@ public class Runner extends JFrame {
         private Robo[] robots;
         private IRobotController[] controllers;
         private List<Line2D> obstacles;
-        private Point2D[] dust=new Point2D[5000];
+        private Point2D[] dust=new Point2D[8000];
 
         //Written by Swapneel + Tom
         public RoboPanel(Robo... robo) {
@@ -81,13 +81,15 @@ public class Runner extends JFrame {
         //Written by Swapneel + Tom
         public void paint(Graphics g) {
             super.paint(g);
-            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Arrays.stream(robots).forEach(r->r.draw((Graphics2D) g));
-            obstacles.forEach(((Graphics2D) g)::draw);
+            var graphics=(Graphics2D) g;
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Arrays.stream(robots).forEach(r->r.draw(graphics));
+            obstacles.forEach(graphics::draw);
             Arrays.stream(dust).filter(Objects::nonNull).forEach(d->{
                 // No method to directly draw a point?! Another of java's quirks
                 var p=new Line2D.Double(d,d);
-                ((Graphics2D) g).draw(p);
+                graphics.setColor(Color.LIGHT_GRAY);
+                graphics.draw(p);
             });
         }
 
