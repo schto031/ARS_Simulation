@@ -1,5 +1,7 @@
+import ai.DefaultGeneDestroyer;
 import ai.IRobotController;
 import ai.RecurrentNeuralNetwork;
+import ai.RobotController;
 import common.Arena;
 import common.Utilities;
 
@@ -15,17 +17,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Runner extends JFrame {
     private static final byte NUMBER_OF_ROBOTS=16;
     // Set a threshold above which NN is triggered
     private static final double NN_THRESHOLD=10;
 
+    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-4,4);
+    // Get a handle to the NN threads
+    private static List<ScheduledFuture<?>> controllerHandle;
+
     private static class RoboPanel extends JPanel{
         private Robo[] robots;
-        private IRobotController[] controllers;
+        private RobotController[] controllers;
         private List<Line2D> obstacles;
         private Point2D[] dust=new Point2D[8000];
 
@@ -45,18 +53,20 @@ public class Runner extends JFrame {
             // Initialize a scheduler
             var executor=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
             // Robots position calculation thread
-            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));
+            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));             // Each robot on a different thread
+//            executor.scheduleAtFixedRate(()->Arrays.stream(robo).forEach(Robo::run),0,8, TimeUnit.MILLISECONDS);    // All robots on single thread
+
             // Display thread
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
             executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo)),1,1, TimeUnit.SECONDS);
             // Initialize neural network for every bot
-            controllers=new IRobotController[robots.length];
+            controllers=new RobotController[robots.length];
             initializeNeuralNetwork();
             // Controller debug thread
             executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getOutput())),1,1, TimeUnit.SECONDS);
             // NN control thread
-            Arrays.stream(robo).forEach(r->executor.scheduleWithFixedDelay(()->{
+            controllerHandle=Arrays.stream(robo).map(r->executor.scheduleWithFixedDelay(()->{
                 var controller=controllers[r.getId()];
                 controller.forwardPropagate();
                 var outputs=controller.getOutput();
@@ -64,7 +74,7 @@ public class Runner extends JFrame {
                 else r.decrementLeftVelocity();
                 if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
                 else r.decrementRightVelocity();
-            },1500,8, TimeUnit.MILLISECONDS));
+            },1500,8, TimeUnit.MILLISECONDS)).collect(Collectors.toUnmodifiableList());
 
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
@@ -109,6 +119,16 @@ public class Runner extends JFrame {
                 nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
         }
+
+        public void breed(){
+            System.err.println("Breeding a better generation!");
+            var winners=Evaluation.getBestBots(robots,NUMBER_OF_REPRODUCERS)
+                    .stream()
+                    .mapToInt(Robo::getId)
+                    .mapToObj(id->controllers[id])
+                    .collect(Collectors.toUnmodifiableList());
+            // mutate/crossover logic goes here
+        }
     }
     //Written by Swapneel
     private Runner() {
@@ -144,11 +164,14 @@ public class Runner extends JFrame {
                     case 'o': robo.incrementLeftVelocity(); break;
                     case 'l': robo.decrementLeftVelocity(); break;
                     case 'x': robo.stop(); break;
+                    case 'e':
+                        controllerHandle.forEach(h->h.cancel(true));
                     case 'r': Arrays.stream(bots).forEach(b->b.setPosition(bounds.getCenterX(),bounds.getCenterY()));  break;
                     case 't': robo.incrementBothVelocity(); break;
                     case 'g': robo.decrementBothVelocity();  break;
                     case 'b': robo.setPosition(bounds.getCenterX(),bounds.getCenterY()); break;
-                    default:
+                    default: controllerHandle.forEach(h->h.cancel(true));
+                        System.err.println("Stopping all controllers!");
                 }
             }
 

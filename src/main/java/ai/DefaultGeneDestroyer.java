@@ -14,6 +14,8 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
         this.crossoverProbability = crossoverProbability;
     }
 
+    public DefaultGeneDestroyer(){}
+
     @Override
     public void mutate(RobotController nn) {
         var rand=new Random();
