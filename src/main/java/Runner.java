@@ -1,5 +1,4 @@
 import ai.IRobotController;
-import ai.NeuralNetwork;
 import ai.RecurrentNeuralNetwork;
 import common.Arena;
 import common.Utilities;
@@ -21,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Runner extends JFrame {
     private static final byte NUMBER_OF_ROBOTS=16;
+    // Set a threshold above which NN is triggered
+    private static final double NN_THRESHOLD=10;
 
     private static class RoboPanel extends JPanel{
         private Robo[] robots;
@@ -33,10 +34,14 @@ public class Runner extends JFrame {
             this.robots=robo;
             setPreferredSize(new Dimension(800,600));
             obstacles= Arena.getBoxedArena(getBounds());
-            // Set all obstacles
-            Arrays.stream(robots).forEach(r-> r.setObstacles(obstacles));
-            // Initalize robots with random velocities
-            Arrays.stream(robots).forEach(r-> r.setVelocity((_vl)->Math.random()-0.5, (_vr)->Math.random()-0.5));
+            Arrays.stream(robots).forEach(r-> {
+                // Set all obstacles
+                r.setObstacles(obstacles);
+                // Initalize robots with random velocities
+                r.setVelocity((_vl)->Math.random()-0.5, (_vr)->Math.random()-0.5);
+                // Set dust (optional)
+                r.setAllDust(dust);
+            });
             // Initialize a scheduler
             var executor=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
             // Robots position calculation thread
@@ -44,22 +49,20 @@ public class Runner extends JFrame {
             // Display thread
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
-            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo[0].proximitySensors)+" "+ Arrays.toString(robo)),1,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo)),1,1, TimeUnit.SECONDS);
             // Initialize neural network for every bot
             controllers=new IRobotController[robots.length];
             initializeNeuralNetwork();
             // Controller debug thread
             executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getOutput())),1,1, TimeUnit.SECONDS);
-            // Set a threshold above which NN is triggered
-            var threshold=10;
             // NN control thread
             Arrays.stream(robo).forEach(r->executor.scheduleWithFixedDelay(()->{
                 var controller=controllers[r.getId()];
                 controller.forwardPropagate();
                 var outputs=controller.getOutput();
-                if(outputs[0]>threshold) r.incrementLeftVelocity();
+                if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();
                 else r.decrementLeftVelocity();
-                if(outputs[1]>threshold) r.incrementRightVelocity();
+                if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
                 else r.decrementRightVelocity();
             },1500,8, TimeUnit.MILLISECONDS));
 

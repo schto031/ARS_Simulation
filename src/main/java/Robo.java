@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Robo implements Runnable, Drawable, IRobotMovement {
@@ -20,10 +21,11 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private final Runnable postUpdateHook;
     private final double delta =0.05;
     final double[] proximitySensors=new double[12];
-    private Shape ellipse=new Ellipse2D.Double();
+    private Shape robotBody =new Ellipse2D.Double();
     private List<Line2D> obstacles=new ArrayList<>();
     private ConcurrentHashMap<Line2D, Boolean> shortest=new ConcurrentHashMap<>(obstacles.size());
-    private Point2D[] dust;
+    private Point2D[] allDust;
+    private Set<Point2D> coveredDust;
     private final int id;
     private final double SENSOR_MAX=200;
     private final double VELOCITY_MAX=20;
@@ -34,6 +36,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         this.postUpdateHook = postUpdateHook;
         this.id=id;
         this.center=new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth);
+        coveredDust=new HashSet<>();
     }
 
     public Robo(double width, Runnable postUpdateHook) { this(width,postUpdateHook,new Random().nextInt()); }
@@ -43,8 +46,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     public void draw(Graphics2D g){
         final var graphics = (Graphics2D)g.create();
         try{
-            ellipse=new Ellipse2D.Double(pos.x,pos.y,width,width);
-            graphics.draw(ellipse);
+            robotBody =new Ellipse2D.Double(pos.x,pos.y,width,width);
+            graphics.draw(robotBody);
             halfWidth=width/2;
             var midX=pos.x+halfWidth;
             var midY=pos.y+halfWidth;
@@ -52,6 +55,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
             center=new Coordinate.Double(midX, midY);
             graphics.drawLine((int)midX,(int)midY,(int)(midX+halfWidth*Math.cos(-orientation)),(int)(midY-halfWidth*Math.sin(-orientation)));
             drawSensors(graphics, midX, midY);
+            collectDust();
             if (null!=shortest) { drawLine(graphics, shortest.keySet()); }
         } finally {
             graphics.dispose();
@@ -152,6 +156,11 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         }
     }
 
+    public void collectDust(){
+        var collectedDust=Arrays.stream(allDust).filter(d->robotBody.contains(d)).collect(Collectors.toCollection(ArrayList::new));
+        this.coveredDust.addAll(collectedDust);
+    }
+
     private void senseDistance(Line2D sensor, int index, double beamStrength){
     	//distances between obstacle and sensor beam origin
         var distance=obstacles.parallelStream()
@@ -184,6 +193,15 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 
     public int getId() { return id; }
 
+    public Point2D[] getAllDust() { return allDust; }
+
+    public Robo setAllDust(Point2D[] allDust) {
+        this.allDust = allDust;
+        return this;
+    }
+
+    public int getCollectedDust(){ return coveredDust.size(); }
+
     @Override
     public String toString() {
         return "Robo{" +
@@ -195,6 +213,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                 ", width=" + width +
                 ", obstacles="+obstacles.size()+
                 ", id="+id+
+                ", dust="+getCollectedDust()+
                 '}';
     }
 
