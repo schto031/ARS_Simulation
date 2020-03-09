@@ -7,8 +7,8 @@ public class TestRingBuffer {
         var buf=new CircularFifoQueue<Integer>(10);
         for(var i=0;i<20;i++){
             buf.add(i);
-//            System.out.println(buf);
-//            if(buf.isAtFullCapacity()) System.out.println(buf.peek());
+            System.out.println(buf);
+            if(buf.isAtFullCapacity()) System.out.println(buf.peek());
         }
     }
 }
