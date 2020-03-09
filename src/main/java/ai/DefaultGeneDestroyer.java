@@ -1,10 +1,9 @@
 package ai;
-
 import common.Utilities;
 
 import java.util.Random;
 
-public class DefaultGeneDestroyer implements IGeneDestroyer{
+public class DefaultGeneDestroyer implements IGeneDestroyer {
     float mutationProbability=0.01f;
     float crossoverProbability=0.5f;
     private Random random=new Random();

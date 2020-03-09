@@ -1,5 +1,4 @@
 package ai;
-
 import org.ejml.simple.SimpleMatrix;
 
 import java.io.FileDescriptor;

@@ -23,13 +23,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class Runner extends JFrame {
-    private static final byte NUMBER_OF_ROBOTS=16;
+    private static final byte NUMBER_OF_ROBOTS=15;
     // Set a threshold above which NN is triggered
     private static final double NN_THRESHOLD=10;
 
     private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-4,4);
     // Get a handle to the NN threads
     private static List<ScheduledFuture<?>> controllerHandle;
+    
+    //33% of robots should mutate and crossover
+    private static final int MUTATION_NUMBER= (int)(NUMBER_OF_ROBOTS*33/100);
+    private static final int CROSSOVER_NUMBER= (int)(NUMBER_OF_ROBOTS*33/100);
+    
+    public static int NUMBER_OF_GENERATION = 0;
 
     private static class RoboPanel extends JPanel{
         private Robo[] robots;
@@ -57,6 +63,9 @@ public class Runner extends JFrame {
             Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));             // Each robot on a different thread
 //            executor.scheduleAtFixedRate(()->Arrays.stream(robo).forEach(Robo::run),0,8, TimeUnit.MILLISECONDS);    // All robots on single thread
 
+            
+            // Generation thread
+            executor.scheduleWithFixedDelay(()-> nextGen(),15,15,TimeUnit.SECONDS);
             // Display thread
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
@@ -100,7 +109,7 @@ public class Runner extends JFrame {
             super.setPreferredSize(preferredSize);
             var rand=new Random();
             var r=new Rectangle(preferredSize);
-            for(var i=0;i<dust.length;i++){ dust[i]=Utilities.rand(rand, r); }
+            for(var i=0;i<dust.length;i++){ dust[i]= Utilities.rand(rand, r); }
         }
 
         private void initializeNeuralNetwork(){
@@ -127,6 +136,11 @@ public class Runner extends JFrame {
 
         public void breed() throws CloneNotSupportedException {
             System.err.println("Breeding a better generation!");
+            var random=new Random(System.currentTimeMillis());
+            int rand1;
+            int rand2;
+            RobotController rc1;
+            RobotController rc2;
             var winners=Evaluation.getBestBots(robots,NUMBER_OF_REPRODUCERS)
                     .stream()
                     .mapToInt(Robo::getId)
@@ -134,13 +148,41 @@ public class Runner extends JFrame {
                     .collect(Collectors.toUnmodifiableList());
             var gd=new DefaultGeneDestroyer();
             // mutate/crossover logic goes here
-            for(var i=0;i<NUMBER_OF_ROBOTS;i++){
+            for(var i=0;i<MUTATION_NUMBER;i++){
                 controllers[i]=winners.get(i%winners.size()).clone();
                 gd.mutate(controllers[i]);
+            }
+            for(var i=NUMBER_OF_ROBOTS-1;i>=NUMBER_OF_ROBOTS-CROSSOVER_NUMBER;i--) {
+            	rand1 = random.nextInt(NUMBER_OF_REPRODUCERS);
+            	rc1= winners.get(rand1).clone();
+            	rand2 = random.nextInt(NUMBER_OF_REPRODUCERS-1);
+            	//we dont want the same controllers to crossover
+            	if(rand1<=rand2) {
+            		rand2+=1;
+            	}
+            	rc2= winners.get(rand2).clone();
+            	gd.crossover(rc1, rc2);
+            	controllers[i] = rc1.clone();
+            }
+            for(var i=MUTATION_NUMBER;i<NUMBER_OF_ROBOTS-CROSSOVER_NUMBER;i++) {
+            	controllers[i]=winners.get(i%winners.size()).clone();
             }
         }
 
         public RobotController[] getControllers() { return controllers; }
+        
+        public void nextGen() {
+        	controllerHandle.forEach(h->h.cancel(true));
+        	try {
+        		for(var r:this.robots) r.getCollectedDustSet().clear();
+        		this.breed();
+        		this.initializeNeuralNetworkControlThread();
+        		NUMBER_OF_GENERATION++;
+        	 } catch (CloneNotSupportedException e) {
+        		 e.printStackTrace();
+        	 }
+        	Arrays.stream(this.robots).forEach(b->b.setPosition(super.getBounds().getCenterX(),super.getBounds().getCenterY()));
+        }
     }
     //Written by Swapneel
     private Runner() {
@@ -164,6 +206,7 @@ public class Runner extends JFrame {
         add(roboPanel);
 
         pack();
+        
         var bounds=getBounds();
         addKeyListener(new KeyListener() {
             @Override
@@ -177,15 +220,12 @@ public class Runner extends JFrame {
                     case 'o': robo.incrementLeftVelocity(); break;
                     case 'l': robo.decrementLeftVelocity(); break;
                     case 'x': robo.stop(); break;
-                    case 'e':
-                        controllerHandle.forEach(h->h.cancel(true));
-                            try {
-                                for(var r:roboPanel.robots) r.getCollectedDustSet().clear();
-                                roboPanel.breed();
-                                roboPanel.initializeNeuralNetworkControlThread();
-                            } catch (CloneNotSupportedException e) {
-                                e.printStackTrace();
-                            }
+				/*
+				 * case 'e': controllerHandle.forEach(h->h.cancel(true)); try { for(var
+				 * r:roboPanel.robots) r.getCollectedDustSet().clear(); roboPanel.breed();
+				 * roboPanel.initializeNeuralNetworkControlThread(); } catch
+				 * (CloneNotSupportedException e) { e.printStackTrace(); }
+				 */
                     case 'r': Arrays.stream(bots).forEach(b->b.setPosition(bounds.getCenterX(),bounds.getCenterY()));  break;
                     case 't': robo.incrementBothVelocity(); break;
                     case 'g': robo.decrementBothVelocity();  break;

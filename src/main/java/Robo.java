@@ -1,3 +1,4 @@
+
 import common.Coordinate;
 
 import java.awt.*;

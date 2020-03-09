@@ -1,4 +1,5 @@
 import ai.IRobotController;
+import ai.RobotController;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +9,7 @@ import java.awt.geom.Ellipse2D;
 
 public class DebugPanel extends JPanel {
     private final IRobotController[] networks;
-    public DebugPanel(IRobotController[] networks) {
+    public DebugPanel(RobotController[] networks) {
         this.networks = networks;
         setPreferredSize(new Dimension(networks.length*15+7,networks[0].getOutput().length*15+15));
         setBackground(new Color(0,0,0,0.2f));

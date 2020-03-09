@@ -1,5 +1,4 @@
 package ai;
-
 import common.Utilities;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.ejml.simple.SimpleMatrix;
