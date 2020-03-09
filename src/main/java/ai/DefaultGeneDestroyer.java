@@ -5,8 +5,8 @@ import common.Utilities;
 import java.util.Random;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer{
-    private float mutationProbability=0.01f;
-    private float crossoverProbability=0.5f;
+    float mutationProbability=0.01f;
+    float crossoverProbability=0.5f;
     private Random random=new Random();
 
     public DefaultGeneDestroyer(float mutationProbability, float crossoverProbability) {
@@ -18,12 +18,11 @@ public class DefaultGeneDestroyer implements IGeneDestroyer{
 
     @Override
     public void mutate(RobotController nn) {
-        var rand=new Random();
         for(var w:nn.weights){
             var data=w.getMatrix().data;
             for(var i=0;i<data.length;i++){
                 if(random.nextDouble()<mutationProbability){
-                    data[i]= Utilities.rand(rand,-5,5);
+                    data[i]= Utilities.rand(random,-5,5);
                 }
             }
         }

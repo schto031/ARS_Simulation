@@ -1,5 +1,4 @@
 import ai.DefaultGeneDestroyer;
-import ai.NeuralNetwork;
 import ai.RecurrentNeuralNetwork;
 import ai.RobotController;
 import common.Arena;
