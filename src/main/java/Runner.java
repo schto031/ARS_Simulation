@@ -37,7 +37,7 @@ public class Runner extends JFrame {
     private static final int MUTATION_NUMBER= (int)(NUMBER_OF_ROBOTS*33/100);
     private static final int CROSSOVER_NUMBER= (int)(NUMBER_OF_ROBOTS*33/100);
     
-    public int NUMBER_OF_GENERATION = 0;
+    public static int NUMBER_OF_GENERATION = 0;
 
     private static class RoboPanel extends JPanel{
         private Robo[] robots;
@@ -168,7 +168,6 @@ public class Runner extends JFrame {
             }
             for(var i=MUTATION_NUMBER;i<NUMBER_OF_ROBOTS-CROSSOVER_NUMBER;i++) {
             	controllers[i]=winners.get(i%winners.size()).clone();
-            	
             }
         }
 
@@ -184,6 +183,7 @@ public class Runner extends JFrame {
         	 } catch (CloneNotSupportedException e) {
         		 e.printStackTrace();
         	 }
+        	Arrays.stream(this.robots).forEach(b->b.setPosition(super.getBounds().getCenterX(),super.getBounds().getCenterY()));
         }
     }
     //Written by Swapneel
@@ -208,6 +208,7 @@ public class Runner extends JFrame {
         add(roboPanel);
 
         pack();
+        
         var bounds=getBounds();
         addKeyListener(new KeyListener() {
             @Override
