@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eclipse-userlibraries>
+  <library name="Maven: ch.qos.logback:logback-classic:1.1.2">
+    <archive path="/home/buga/.m2/repository/ch/qos/logback/logback-classic/1.1.2/logback-classic-1.1.2.jar" />
+  </library>
+  <library name="Maven: ch.qos.logback:logback-core:1.1.2">
+    <archive path="/home/buga/.m2/repository/ch/qos/logback/logback-core/1.1.2/logback-core-1.1.2.jar" />
+  </library>
+  <library name="Maven: org.apache.commons:commons-collections4:4.4">
+    <archive path="/home/buga/.m2/repository/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar" />
+  </library>
+  <library name="Maven: org.apache.commons:commons-lang3:3.3.2">
+    <archive path="/home/buga/.m2/repository/org/apache/commons/commons-lang3/3.3.2/commons-lang3-3.3.2.jar" />
+  </library>
+  <library name="Maven: org.apiguardian:apiguardian-api:1.1.0">
+    <archive path="/home/buga/.m2/repository/org/apiguardian/apiguardian-api/1.1.0/apiguardian-api-1.1.0.jar" />
+  </library>
+  <library name="Maven: org.beykery:neuroph:2.92">
+    <archive path="/home/buga/.m2/repository/org/beykery/neuroph/2.92/neuroph-2.92.jar" />
+  </library>
+  <library name="Maven: org.ejml:all:0.30">
+    <archive path="/home/buga/.m2/repository/org/ejml/all/0.30/all-0.30.jar" />
+  </library>
+  <library name="Maven: org.ejml:core:0.30">
+    <archive path="/home/buga/.m2/repository/org/ejml/core/0.30/core-0.30.jar" />
+  </library>
+  <library name="Maven: org.ejml:dense64:0.30">
+    <archive path="/home/buga/.m2/repository/org/ejml/dense64/0.30/dense64-0.30.jar" />
+  </library>
+  <library name="Maven: org.ejml:denseC64:0.30">
+    <archive path="/home/buga/.m2/repository/org/ejml/denseC64/0.30/denseC64-0.30.jar" />
+  </library>
+  <library name="Maven: org.ejml:equation:0.30">
+    <archive path="/home/buga/.m2/repository/org/ejml/equation/0.30/equation-0.30.jar" />
+  </library>
+  <library name="Maven: org.ejml:simple:0.30">
+    <archive path="/home/buga/.m2/repository/org/ejml/simple/0.30/simple-0.30.jar" />
+  </library>
+  <library name="Maven: org.junit.jupiter:junit-jupiter-api:5.6.0">
+    <archive path="/home/buga/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.6.0/junit-jupiter-api-5.6.0.jar" />
+  </library>
+  <library name="Maven: org.junit.platform:junit-platform-commons:1.6.0">
+    <archive path="/home/buga/.m2/repository/org/junit/platform/junit-platform-commons/1.6.0/junit-platform-commons-1.6.0.jar" />
+  </library>
+  <library name="Maven: org.opentest4j:opentest4j:1.2.0">
+    <archive path="/home/buga/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar" />
+  </library>
+  <library name="Maven: org.slf4j:slf4j-api:1.7.5">
+    <archive path="/home/buga/.m2/repository/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar" />
+  </library>
+</eclipse-userlibraries>
+
