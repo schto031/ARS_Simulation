@@ -21,6 +21,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private final Runnable postUpdateHook;
     private final double delta =0.05;
     final double[] proximitySensors=new double[12];
+    // This will be almost a clone of proximitySensors, but can be resized and manipulated for purposes other than sensors
+    double[] inputLayerOfNN=new double[12];
     private Shape robotBody =new Ellipse2D.Double();
     private List<Line2D> obstacles=new ArrayList<>();
     private ConcurrentHashMap<Line2D, Boolean> shortest=new ConcurrentHashMap<>(obstacles.size());
@@ -168,6 +170,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                 .mapToDouble(p->findIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
         distance.ifPresent(d->d=d*SENSOR_MAX/beamStrength);
         proximitySensors[index]=distance.orElse(SENSOR_MAX);
+        inputLayerOfNN[index]=distance.orElse(SENSOR_MAX);
     }
 
     //finds intersection point no matter what the orientation of the lines
@@ -201,6 +204,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     }
 
     public int getCollectedDust(){ return coveredDust.size(); }
+    public Set<Point2D> getCollectedDustSet(){ return coveredDust; }
 
     @Override
     public String toString() {

@@ -50,9 +50,10 @@ public class NeuralNetwork extends RobotController implements Cloneable, IRobotC
         return layers[0].getMatrix().data;
     }
 
-    public void setInputByReference(double ...values){
+    public double[] setInputByReference(double ...values){
         if(values.length!=getInput().length) throw new IllegalArgumentException(String.format("Input layer dimensions must match! %d vs %d",values.length,getInput().length));
         layers[0].getMatrix().data=values;
+        return values;
     }
 
     @Override
@@ -72,11 +73,6 @@ public class NeuralNetwork extends RobotController implements Cloneable, IRobotC
         var config=new int[layers.length];
         for(var i=0;i<layers.length;i++) config[i]=layers[i].getMatrix().data.length;
         return config;
-    }
-
-    @Override
-    protected NeuralNetwork clone() throws CloneNotSupportedException {
-        return new NeuralNetwork(activation, getConfiguration());
     }
 
     public void dump(String filename) throws IOException {

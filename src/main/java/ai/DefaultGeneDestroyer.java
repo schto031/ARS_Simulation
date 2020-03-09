@@ -5,7 +5,7 @@ import common.Utilities;
 import java.util.Random;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer{
-    private float mutationProbability=0.5f;
+    private float mutationProbability=0.01f;
     private float crossoverProbability=0.5f;
     private Random random=new Random();
 

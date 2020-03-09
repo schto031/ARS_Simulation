@@ -1,5 +1,5 @@
 import ai.DefaultGeneDestroyer;
-import ai.IRobotController;
+import ai.NeuralNetwork;
 import ai.RecurrentNeuralNetwork;
 import ai.RobotController;
 import common.Arena;
@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +37,7 @@ public class Runner extends JFrame {
         private RobotController[] controllers;
         private List<Line2D> obstacles;
         private Point2D[] dust=new Point2D[8000];
+        private ScheduledThreadPoolExecutor executor;
 
         //Written by Swapneel + Tom
         public RoboPanel(Robo... robo) {
@@ -51,7 +53,7 @@ public class Runner extends JFrame {
                 r.setAllDust(dust);
             });
             // Initialize a scheduler
-            var executor=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
+            executor=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
             // Robots position calculation thread
             Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));             // Each robot on a different thread
 //            executor.scheduleAtFixedRate(()->Arrays.stream(robo).forEach(Robo::run),0,8, TimeUnit.MILLISECONDS);    // All robots on single thread
@@ -63,18 +65,9 @@ public class Runner extends JFrame {
             // Initialize neural network for every bot
             controllers=new RobotController[robots.length];
             initializeNeuralNetwork();
+            initializeNeuralNetworkControlThread();
             // Controller debug thread
             executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getOutput())),1,1, TimeUnit.SECONDS);
-            // NN control thread
-            controllerHandle=Arrays.stream(robo).map(r->executor.scheduleWithFixedDelay(()->{
-                var controller=controllers[r.getId()];
-                controller.forwardPropagate();
-                var outputs=controller.getOutput();
-                if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();
-                else r.decrementLeftVelocity();
-                if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
-                else r.decrementRightVelocity();
-            },1500,8, TimeUnit.MILLISECONDS)).collect(Collectors.toUnmodifiableList());
 
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
@@ -114,21 +107,41 @@ public class Runner extends JFrame {
         private void initializeNeuralNetwork(){
             for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-                var nn=new RecurrentNeuralNetwork(1, 50, new int[]{12,4,2});
+                var nn=new RecurrentNeuralNetwork(1, 100, new int[]{12,8,4,2});
                 controllers[i]=nn;
-                nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
+                robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
         }
 
-        public void breed(){
+        public void initializeNeuralNetworkControlThread(){
+            // NN control thread
+            controllerHandle=Arrays.stream(robots).map(r->executor.scheduleWithFixedDelay(()->{
+                var controller=controllers[r.getId()];
+                controller.forwardPropagate();
+                var outputs=controller.getOutput();
+                if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();
+                else r.decrementLeftVelocity();
+                if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
+                else r.decrementRightVelocity();
+            },1500,8, TimeUnit.MILLISECONDS)).collect(Collectors.toUnmodifiableList());
+        }
+
+        public void breed() throws CloneNotSupportedException {
             System.err.println("Breeding a better generation!");
             var winners=Evaluation.getBestBots(robots,NUMBER_OF_REPRODUCERS)
                     .stream()
                     .mapToInt(Robo::getId)
                     .mapToObj(id->controllers[id])
                     .collect(Collectors.toUnmodifiableList());
+            var gd=new DefaultGeneDestroyer();
             // mutate/crossover logic goes here
+            for(var i=0;i<NUMBER_OF_ROBOTS;i++){
+                controllers[i]=winners.get(i%winners.size()).clone();
+                gd.mutate(controllers[i]);
+            }
         }
+
+        public RobotController[] getControllers() { return controllers; }
     }
     //Written by Swapneel
     private Runner() {
@@ -148,7 +161,8 @@ public class Runner extends JFrame {
             bots[i]=robo;
         }
         var robo=bots[0];
-        add(new RoboPanel(bots));
+        var roboPanel=new RoboPanel(bots);
+        add(roboPanel);
 
         pack();
         var bounds=getBounds();
@@ -166,12 +180,24 @@ public class Runner extends JFrame {
                     case 'x': robo.stop(); break;
                     case 'e':
                         controllerHandle.forEach(h->h.cancel(true));
+                            try {
+                                for(var r:roboPanel.robots) r.getCollectedDustSet().clear();
+                                roboPanel.breed();
+                                roboPanel.initializeNeuralNetworkControlThread();
+                            } catch (CloneNotSupportedException e) {
+                                e.printStackTrace();
+                            }
                     case 'r': Arrays.stream(bots).forEach(b->b.setPosition(bounds.getCenterX(),bounds.getCenterY()));  break;
                     case 't': robo.incrementBothVelocity(); break;
                     case 'g': robo.decrementBothVelocity();  break;
                     case 'b': robo.setPosition(bounds.getCenterX(),bounds.getCenterY()); break;
-                    default: controllerHandle.forEach(h->h.cancel(true));
-                        System.err.println("Stopping all controllers!");
+                    default: for(var c:roboPanel.controllers) {
+                        try {
+                            c.toFile();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
 
