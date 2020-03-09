@@ -1,6 +1,6 @@
-package ai;
+package main.java.ai;
 
-import common.Utilities;
+import main.java.common.Utilities;
 
 import java.util.Random;
 

@@ -1,4 +1,4 @@
-package ai;
+package test.java.ai;
 
 import org.ejml.ops.MatrixFeatures;
 import org.ejml.simple.SimpleMatrix;

@@ -1,4 +1,5 @@
-import common.Coordinate;
+package main.java;
+import main.java.common.Coordinate;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;

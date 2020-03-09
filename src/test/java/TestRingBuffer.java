@@ -1,3 +1,4 @@
+package test.java;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.junit.jupiter.api.Test;
 

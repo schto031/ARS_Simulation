@@ -1,3 +1,4 @@
+package main.java;
 import java.awt.*;
 
 public interface Drawable {
