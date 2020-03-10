@@ -250,7 +250,17 @@ public class Runner extends JFrame {
             @Override
             public void keyReleased(KeyEvent keyEvent) { }
         });
-        getRootPane().registerKeyboardAction(e->System.exit(0), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e->{
+
+            try(var fos=new FileOutputStream(System.getProperty("TRAINED","weights.obj"));
+                var oos=new ObjectOutputStream(fos)) {
+                System.err.println("Dumping weights!");
+                oos.writeObject(roboPanel.controllers);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            System.exit(0);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 

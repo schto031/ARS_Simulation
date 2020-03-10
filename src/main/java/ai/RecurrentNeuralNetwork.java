@@ -3,11 +3,12 @@ package ai;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.ejml.simple.SimpleMatrix;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, IRobotController {
+public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, IRobotController, Serializable {
     private int recurrentLayer;
-    private final CircularFifoQueue<SimpleMatrix> previousValues;
+    private transient final CircularFifoQueue<SimpleMatrix> previousValues;
     private int trueInputLayerSize;
 
     @Override

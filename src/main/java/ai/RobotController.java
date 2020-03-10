@@ -1,10 +1,7 @@
 package ai;
 import org.ejml.simple.SimpleMatrix;
 
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -62,6 +59,13 @@ public abstract class RobotController implements IRobotController, Cloneable {
             System.out.println(this);
         } finally {
             System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+        }
+    }
+
+    public void dump() throws IOException{
+        try(var fos=new FileOutputStream(System.getProperty("TRAINED","weights.obj"));
+            var oos=new ObjectOutputStream(fos)){
+            oos.writeObject(weights);
         }
     }
 }
