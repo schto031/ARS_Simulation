@@ -42,7 +42,7 @@ public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, 
     public void forwardPropagate() {
         synchronized (previousValues){
             if(previousValues.isAtFullCapacity() && null!=layers[0] && previousValues.peek() != null) {
-                layers[0].insertIntoThis(trueInputLayerSize, 0, previousValues.peek());
+                layers[0].insertIntoThis(trueInputLayerSize, 0, previousValues.peek()); 
             }
             previousValues.add(layers[recurrentLayer].copy());
         }

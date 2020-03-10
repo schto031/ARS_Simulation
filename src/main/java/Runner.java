@@ -21,17 +21,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Runner extends JFrame {
-    private static final byte NUMBER_OF_ROBOTS=16;
+    private static final byte NUMBER_OF_ROBOTS=50;
     // Set a threshold above which NN is triggered
     private static final double NN_THRESHOLD=10;
 
-    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-4,4);
+    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-6,6);
     // Get a handle to the NN threads
     private static List<ScheduledFuture<?>> controllerHandle;
     
     //33% of robots should mutate and crossover
-    private static final int MUTATION_NUMBER= NUMBER_OF_ROBOTS*33/100;
-    private static final int CROSSOVER_NUMBER= NUMBER_OF_ROBOTS*33/100;
+    private static final int MUTATION_NUMBER= NUMBER_OF_ROBOTS*20/100;
+    private static final int CROSSOVER_NUMBER= NUMBER_OF_ROBOTS*20/100;
 
     private static final int DELAY=8;
     private static final int GEN=10;
@@ -119,7 +119,7 @@ public class Runner extends JFrame {
         private void initializeNeuralNetwork(){
             for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-                var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.ClippedRelu(200), 12,4,2);
+                var nn=new RecurrentNeuralNetwork(1, 120, new RobotController.ClippedRelu(200), 12,4,2);
                 controllers[i]=nn;
                 robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
