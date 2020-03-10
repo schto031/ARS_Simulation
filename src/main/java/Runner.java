@@ -25,7 +25,7 @@ public class Runner extends JFrame {
     // Set a threshold above which NN is triggered
     private static final double NN_THRESHOLD=10;
 
-    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-6,6);
+    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-6,4);
     // Get a handle to the NN threads
     private static List<ScheduledFuture<?>> controllerHandle;
     
