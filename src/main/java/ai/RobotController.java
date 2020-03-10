@@ -5,10 +5,10 @@ import java.io.*;
 import java.util.UUID;
 import java.util.function.Function;
 
-public abstract class RobotController implements IRobotController, Cloneable {
+public abstract class RobotController implements IRobotController, Cloneable, Serializable {
     SimpleMatrix[] layers;
     SimpleMatrix[] weights;
-    final Activation activation;
+    transient final Activation activation;
     public UUID ID=UUID.randomUUID();
 
     RobotController(Activation activation) { this.activation = activation; }
