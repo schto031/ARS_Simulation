@@ -31,7 +31,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private Point2D[] allDust;
     private Set<Point2D> coveredDust;
     private final int id;
-    private final double SENSOR_MAX=200;
+    private final double SENSOR_MAX=100;
     private final double VELOCITY_MAX=20;
     public AtomicInteger collisions=new AtomicInteger();
 
@@ -141,7 +141,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     	//grey and white color
         Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
         //length of sensor beams
-        var beamStrength=width*4;
+        var beamStrength=width*2;
         float[] dist={0f,1f};
         //color fades for sensor beams
         var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(midX, midY), (float) beamStrength, dist, colors);
@@ -157,7 +157,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
             Point2D distanceStringPosition = new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i));
             graphics.setPaint(new Color(1,0,0,0.3f));
             //
-            graphics.drawString( Integer.toString((int)proximitySensors[j-1]) , (int) distanceStringPosition.getX(), (int)distanceStringPosition.getY() );
+            graphics.drawString(Integer.toString((int)proximitySensors[j-1]) , (int) distanceStringPosition.getX(), (int)distanceStringPosition.getY() );
             graphics.setPaint(radialGradientPaint);
         }
     }

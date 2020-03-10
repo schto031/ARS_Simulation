@@ -6,8 +6,8 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer {
-    float mutationProbability=0.1f;
-    float crossoverProbability=0.2f;
+    float mutationProbability=0.01f;
+    float crossoverProbability=0.5f;
     final Random random=new Random();
     public final Supplier<Double> randomizer=()->Utilities.rand(random, -5,5);
 
@@ -23,9 +23,7 @@ public class DefaultGeneDestroyer implements IGeneDestroyer {
         for(var w:nn.weights){
             var data=w.getMatrix().data;
             for(var i=0;i<data.length;i++){
-                if(random.nextDouble()<mutationProbability){
-                    data[i]= randomizer.get();
-                }
+                if(random.nextDouble()<mutationProbability){ data[i]= randomizer.get(); }
             }
         }
     }

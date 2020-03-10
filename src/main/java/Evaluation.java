@@ -5,11 +5,15 @@ import java.util.stream.Collectors;
 
 public class Evaluation {
     public static List<Robo> getBestBots(Robo[] robots, int number){
-        return Arrays.stream(robots).sorted(Comparator.comparingDouble(Evaluation::evaluationFunction).reversed()).limit(number).collect(Collectors.toUnmodifiableList());
+        return Arrays.stream(robots)
+                .sorted(Comparator.comparingDouble(Evaluation::evaluationFunction)
+                        .reversed())
+                .limit(number)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     private static final double APPRECIATE_FACTOR=1;
-    private static final double COLLISION_PENAL_FACTOR=5;
+    private static final double COLLISION_PENAL_FACTOR=10;
     private static final double ROTATION_PENAL_FACTOR=0;
 
     public static double evaluationFunction(Robo robo){

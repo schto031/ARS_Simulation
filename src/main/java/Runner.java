@@ -1,3 +1,4 @@
+import ai.NeuralNetwork;
 import ai.RecurrentNeuralNetwork;
 import ai.RobotController;
 import ai.SinglePointGeneDestroyer;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 public class Runner extends JFrame {
     private static final byte NUMBER_OF_ROBOTS=16;
     // Set a threshold above which NN is triggered
-    private static final double NN_THRESHOLD=10;
+    private static final double NN_THRESHOLD=50;
 
     private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-4,4);
     // Get a handle to the NN threads
@@ -42,7 +43,7 @@ public class Runner extends JFrame {
         private Robo[] robots;
         private final List<Robo> bestRobots=new ArrayList<>();
         private RobotController[] controllers;
-        private Arena arena=Arena.getDoubleBoxedArena(getBounds());
+        private Arena arena=Arena.getBoxedArena(getBounds());
         private Point2D[] dust=new Point2D[8000];
         private ScheduledThreadPoolExecutor executor;
 
@@ -120,7 +121,7 @@ public class Runner extends JFrame {
         private void initializeNeuralNetwork(){
             for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-                var nn=new RecurrentNeuralNetwork(1, 500, new RobotController.ClippedRelu(200), 12,4,2);
+                var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.Relu(), 12,4,2);
                 controllers[i]=nn;
                 robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
@@ -136,7 +137,7 @@ public class Runner extends JFrame {
                 else r.decrementLeftVelocity();
                 if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
                 else r.decrementRightVelocity();
-            },1500,DELAY, TimeUnit.MILLISECONDS)).collect(Collectors.toUnmodifiableList());
+            },1500,DELAY*4, TimeUnit.MILLISECONDS)).collect(Collectors.toUnmodifiableList());
         }
 
         public void breed() throws CloneNotSupportedException {
@@ -149,11 +150,13 @@ public class Runner extends JFrame {
                     .mapToInt(Robo::getId)
                     .mapToObj(id->controllers[id])
                     .collect(Collectors.toUnmodifiableList());
+            for(var b:bestRobots){ System.err.println(Evaluation.evaluationFunction(b)+" "+b); }
 //            var gd=new DefaultGeneDestroyer();
             var gd=new SinglePointGeneDestroyer();
             // mutate/crossover logic goes here
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){ controllers[i]=winners.get(i%winners.size()).clone(); }
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){
+                if(random.nextBoolean()) continue;
                 int r1, r2;
                 do{
                     r1=random.nextInt(NUMBER_OF_ROBOTS);
@@ -162,7 +165,10 @@ public class Runner extends JFrame {
                 gd.crossover(controllers[r1], controllers[r2]);
             }
             for (var controller : controllers) { controller.ID = UUID.randomUUID(); }
-            for(var i=0;i<NUMBER_OF_ROBOTS;i++){ gd.mutate(controllers[i]); }
+            for(var i=0;i<NUMBER_OF_ROBOTS;i++){
+                if(random.nextBoolean()) continue;
+                gd.mutate(controllers[i]);
+            }
         }
 
         public RobotController[] getControllers() { return controllers; }
@@ -178,9 +184,9 @@ public class Runner extends JFrame {
                 ps.println();
             } catch (IOException e){ e.printStackTrace(); }
             try {
-        		for(var r:this.robots) r.resetParameters();
         		this.breed();
-        		this.initializeNeuralNetworkControlThread();
+                for(var r:this.robots) r.resetParameters();
+                this.initializeNeuralNetworkControlThread();
         		NUMBER_OF_GENERATION.incrementAndGet();
         	 } catch (CloneNotSupportedException e) {
         		 e.printStackTrace();
@@ -208,7 +214,6 @@ public class Runner extends JFrame {
         var robo=bots[0];
         var roboPanel=new RoboPanel(bots);
         add(roboPanel);
-
         pack();
         
         var bounds=getBounds();
