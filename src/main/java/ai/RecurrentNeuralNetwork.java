@@ -16,7 +16,7 @@ public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, 
         super.initializeRandomArray(numberOfNodesPerLayer);
     }
 
-    protected RecurrentNeuralNetwork(int recurrentLayer, int bufferSize,NeuralNetwork.Activation activation, int... numberOfNodesPerLayer) {
+    public RecurrentNeuralNetwork(int recurrentLayer, int bufferSize,NeuralNetwork.Activation activation, int... numberOfNodesPerLayer) {
         super(activation);
         this.recurrentLayer=recurrentLayer;
         if(recurrentLayer==0) throw new IllegalArgumentException("Cannot have a recurrent connection to input layer!");
@@ -50,8 +50,8 @@ public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, 
     @Override
     public double[] setInputByReference(double... values) {
         values= Arrays.copyOf(values, getInput().length);
-        var dgd=new DefaultGeneDestroyer();
-        for(var i=trueInputLayerSize;i<getInput().length;i++) values[i]=dgd.randomizer.get();
+//        var dgd=new DefaultGeneDestroyer();
+//        for(var i=trueInputLayerSize;i<getInput().length;i++) values[i]=dgd.randomizer.get();
         super.setInputByReference(values);
         return values;
     }

@@ -29,11 +29,21 @@ public abstract class RobotController implements IRobotController, Cloneable {
         }
     }
 
-    static class Sigmoid extends Activation{ public Sigmoid() { super((z)->1/(1+Math.exp(-z))); }}
+    public static class Sigmoid extends Activation{ public Sigmoid() { super((z)->1/(1+Math.exp(-z))); }}
 
-    static class Relu extends Activation{ public Relu() { super((a)->a<0?0:a); }}
+    public static class ClippedRelu extends Activation{
+        public ClippedRelu(double limit) {
+            super((a)->{
+                if(a>limit) a=limit;
+                if(a<0) a=0d;
+                return a;
+            });
+        }
+    }
 
-    static class Tanh extends Activation{ public Tanh() { super(Math::tanh); }}
+    public static class Relu extends Activation{ public Relu() { super((a)->a<0?0:a); }}
+
+    public static class Tanh extends Activation{ public Tanh() { super(Math::tanh); }}
 
     @Override
     public RobotController clone() throws CloneNotSupportedException {

@@ -120,7 +120,7 @@ public class Runner extends JFrame {
         private void initializeNeuralNetwork(){
             for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-                var nn=new RecurrentNeuralNetwork(1, 500, new int[]{12,4,2});
+                var nn=new RecurrentNeuralNetwork(1, 500, new RobotController.ClippedRelu(200), 12,4,2);
                 controllers[i]=nn;
                 robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
