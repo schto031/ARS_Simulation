@@ -21,11 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Runner extends JFrame {
-<<<<<<< HEAD
     private static final byte NUMBER_OF_ROBOTS=26;
-=======
-    private static final byte NUMBER_OF_ROBOTS=50;
->>>>>>> 07c86a8ac05e53788cf9a94a95ec8fddcace3289
     // Set a threshold above which NN is triggered
     private static final double NN_THRESHOLD=10;
 
@@ -122,25 +118,13 @@ public class Runner extends JFrame {
         }
 
         private void initializeNeuralNetwork(){
-            try(var fis=new FileInputStream(System.getProperty("TRAINED","weights.obj"));
-            var ois=new ObjectInputStream(fis)){
-                System.err.println("Loading weights!");
-                var c=(RobotController) ois.read();
-            } catch (IOException | ClassNotFoundException e){
+
                 for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-<<<<<<< HEAD
                     var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.ClippedRelu(NN_THRESHOLD*2), 12,4,2);
                     controllers[i]=nn;
 //                robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
-                }
-=======
-                var nn=new RecurrentNeuralNetwork(1, 120, new RobotController.ClippedRelu(200), 12,4,2);
-                controllers[i]=nn;
-                robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
->>>>>>> 07c86a8ac05e53788cf9a94a95ec8fddcace3289
             }
-
         }
 
         public void initializeNeuralNetworkControlThread(){
