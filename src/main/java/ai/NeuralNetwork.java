@@ -12,7 +12,7 @@ public class NeuralNetwork extends RobotController implements Cloneable, IRobotC
         initializeRandomArray(numberOfNodesPerLayer);
     }
 
-    public NeuralNetwork(int... numberOfNodesPerLayer) { this(new Relu() ,numberOfNodesPerLayer); }
+    public NeuralNetwork(int... numberOfNodesPerLayer) { this(new Relu(),numberOfNodesPerLayer); }
     NeuralNetwork(Activation activation){ super(activation); }
 
     void initializeRandomArray(int... numberOfNodesPerLayer){

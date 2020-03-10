@@ -5,12 +5,14 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.UUID;
 import java.util.function.Function;
 
 public abstract class RobotController implements IRobotController, Cloneable {
     SimpleMatrix[] layers;
     SimpleMatrix[] weights;
     final Activation activation;
+    public UUID ID=UUID.randomUUID();
 
     RobotController(Activation activation) { this.activation = activation; }
 

@@ -8,6 +8,7 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +33,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private final int id;
     private final double SENSOR_MAX=200;
     private final double VELOCITY_MAX=20;
+    public AtomicInteger collisions=new AtomicInteger();
 
     public Robo(double width, Runnable postUpdateHook, int id) {
         this.width=width;
@@ -98,6 +100,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                     return a;
                 }).orElse(new Coordinate.Double(0,0));
         magnitude.minus();
+        collisions.incrementAndGet();
         point2D.add(magnitude);
         return point2D;
     }
@@ -205,7 +208,6 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     }
 
     public int getCollectedDust(){ return coveredDust.size(); }
-    public Set<Point2D> getCollectedDustSet(){ return coveredDust; }
 
     @Override
     public String toString() {
@@ -218,6 +220,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                 ", width=" + width +
                 ", obstacles="+obstacles.size()+
                 ", id="+id+
+                ", collisions="+collisions+
                 ", dust="+getCollectedDust()+
                 '}';
     }
@@ -254,4 +257,11 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 
     @Override
     public double[] getSensorValues() { return this.proximitySensors; }
+
+    public double getDifferentialVelocity(){ return vl-vr; }
+
+    public void resetParameters(){
+        coveredDust.clear();
+        collisions.set(0);
+    }
 }

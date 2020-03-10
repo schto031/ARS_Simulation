@@ -1,14 +1,13 @@
 package ai;
-import common.Utilities;
+
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.Arrays;
-import java.util.Random;
 
 public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, IRobotController {
     private int recurrentLayer;
-    private CircularFifoQueue<SimpleMatrix> previousValues;
+    private transient CircularFifoQueue<SimpleMatrix> previousValues;
     private int trueInputLayerSize;
 
     @Override
@@ -51,8 +50,8 @@ public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, 
     @Override
     public double[] setInputByReference(double... values) {
         values= Arrays.copyOf(values, getInput().length);
-        var rand=new Random();
-        for(var i=trueInputLayerSize;i<getInput().length;i++) values[i]= Utilities.rand(rand, -1, 1);
+        var dgd=new DefaultGeneDestroyer();
+        for(var i=trueInputLayerSize;i<getInput().length;i++) values[i]=dgd.randomizer.get();
         super.setInputByReference(values);
         return values;
     }
