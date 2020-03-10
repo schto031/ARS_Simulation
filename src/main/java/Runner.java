@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class Runner extends JFrame {
     private static final byte NUMBER_OF_ROBOTS=16;
     // Set a threshold above which NN is triggered
-    private static final double NN_THRESHOLD=50;
+    private static final double NN_THRESHOLD=10;
 
     private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-4,4);
     // Get a handle to the NN threads
@@ -119,7 +119,7 @@ public class Runner extends JFrame {
         private void initializeNeuralNetwork(){
             for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-                var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.Relu(), 12,4,2);
+                var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.ClippedRelu(200), 12,4,2);
                 controllers[i]=nn;
                 robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
             }
@@ -168,7 +168,7 @@ public class Runner extends JFrame {
             }
             for (var controller : controllers) { controller.ID = UUID.randomUUID(); }
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){
-//                if(random.nextBoolean()) continue;
+                if(random.nextBoolean()) continue;
                 gd.mutate(controllers[i]);
             }
         }
