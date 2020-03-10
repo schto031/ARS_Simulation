@@ -21,20 +21,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Runner extends JFrame {
-    private static final byte NUMBER_OF_ROBOTS=16;
+<<<<<<< HEAD
+    private static final byte NUMBER_OF_ROBOTS=26;
+=======
+    private static final byte NUMBER_OF_ROBOTS=50;
+>>>>>>> 07c86a8ac05e53788cf9a94a95ec8fddcace3289
     // Set a threshold above which NN is triggered
     private static final double NN_THRESHOLD=10;
 
-    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-4,4);
+    private static final byte NUMBER_OF_REPRODUCERS= (byte) Math.min(NUMBER_OF_ROBOTS-6,6);
     // Get a handle to the NN threads
     private static List<ScheduledFuture<?>> controllerHandle;
     
     //33% of robots should mutate and crossover
-    private static final int MUTATION_NUMBER= NUMBER_OF_ROBOTS*33/100;
-    private static final int CROSSOVER_NUMBER= NUMBER_OF_ROBOTS*33/100;
+    private static final int MUTATION_NUMBER= NUMBER_OF_ROBOTS*20/100;
+    private static final int CROSSOVER_NUMBER= NUMBER_OF_ROBOTS*20/100;
 
     private static final int DELAY=8;
-    private static final int GEN=10;
+    private static final int GEN=20;
     protected static AtomicInteger NUMBER_OF_GENERATION = new AtomicInteger();
 
     private static class RoboPanel extends JPanel{
@@ -75,6 +79,7 @@ public class Runner extends JFrame {
             initializeNeuralNetworkControlThread();
             // Controller debug thread
             executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getOutput())),1,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()-> System.err.println(Arrays.toString(controllers[0].getInput())) ,1,1, TimeUnit.SECONDS);
             // Best robots calculation thread
             executor.scheduleWithFixedDelay(()-> {
                 bestRobots.clear();
@@ -117,12 +122,25 @@ public class Runner extends JFrame {
         }
 
         private void initializeNeuralNetwork(){
-            for(var i=0;i<controllers.length;i++){
+            try(var fis=new FileInputStream(System.getProperty("TRAINED","weights.obj"));
+            var ois=new ObjectInputStream(fis)){
+                System.err.println("Loading weights!");
+                var c=(RobotController) ois.read();
+            } catch (IOException | ClassNotFoundException e){
+                for(var i=0;i<controllers.length;i++){
 //                var nn=new NeuralNetwork(12,4,2);
-                var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.ClippedRelu(200), 12,4,2);
+<<<<<<< HEAD
+                    var nn=new RecurrentNeuralNetwork(1, 10, new RobotController.ClippedRelu(NN_THRESHOLD*2), 12,4,2);
+                    controllers[i]=nn;
+//                robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
+                }
+=======
+                var nn=new RecurrentNeuralNetwork(1, 120, new RobotController.ClippedRelu(200), 12,4,2);
                 controllers[i]=nn;
                 robots[i].inputLayerOfNN=nn.setInputByReference(robots[i].proximitySensors);   // hook up proximity sensors to input of nn
+>>>>>>> 07c86a8ac05e53788cf9a94a95ec8fddcace3289
             }
+
         }
 
         public void initializeNeuralNetworkControlThread(){
@@ -130,6 +148,7 @@ public class Runner extends JFrame {
             controllerHandle=Arrays.stream(robots).map(r->executor.scheduleWithFixedDelay(()->{
                 try{
                     var controller=controllers[r.getId()];
+                    controller.setInputByValue(r.proximitySensors);
                     controller.forwardPropagate();
                     var outputs=controller.getOutput();
                     if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();
@@ -154,8 +173,8 @@ public class Runner extends JFrame {
                     .mapToObj(id->controllers[id])
                     .collect(Collectors.toUnmodifiableList());
             for(var b:bestRobots){ System.err.println(Evaluation.evaluationFunction(b)+" "+b); }
-//            var gd=new DefaultGeneDestroyer();
-            var gd=new SinglePointGeneDestroyer();
+            var gd=new DefaultGeneDestroyer();
+//            var gd=new SinglePointGeneDestroyer();
             // mutate/crossover logic goes here
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){ controllers[i]=winners.get(i%winners.size()).clone(); }
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){
@@ -163,12 +182,14 @@ public class Runner extends JFrame {
                 do{
                     r1=random.nextInt(NUMBER_OF_ROBOTS);
                     r2=random.nextInt(NUMBER_OF_ROBOTS);
-                } while (r1!=r2 && controllers[r1].ID!=controllers[r2].ID);
+                } while (r1==r2 && controllers[r1].ID==controllers[r2].ID);
+                System.err.println("Crossover "+r1+" and "+r2);
                 gd.crossover(controllers[r1], controllers[r2]);
             }
             for (var controller : controllers) { controller.ID = UUID.randomUUID(); }
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){
                 if(random.nextBoolean()) continue;
+                System.err.println("Mutate "+i);
                 gd.mutate(controllers[i]);
             }
         }
@@ -188,7 +209,10 @@ public class Runner extends JFrame {
             } catch (IOException e){ e.printStackTrace(); }
             try {
         		this.breed();
-                for(var r:this.robots) r.resetParameters();
+                for(var r:this.robots) {
+                    r.resetParameters();
+                    r.setVelocity((_vl)->Math.random()-0.5, (_vr)->Math.random()-0.5);
+                }
                 this.initializeNeuralNetworkControlThread();
         		NUMBER_OF_GENERATION.incrementAndGet();
         	 } catch (CloneNotSupportedException e) {

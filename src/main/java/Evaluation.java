@@ -13,8 +13,8 @@ public class Evaluation {
     }
 
     private static final double APPRECIATE_FACTOR=1;
-    private static final double COLLISION_PENAL_FACTOR=10;
-    private static final double ROTATION_PENAL_FACTOR=0;
+    private static final double COLLISION_PENAL_FACTOR=5;
+    private static final double ROTATION_PENAL_FACTOR=5;
 
     public static double evaluationFunction(Robo robo){
         return robo.getCollectedDust()*APPRECIATE_FACTOR

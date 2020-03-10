@@ -7,9 +7,13 @@ import java.util.function.Supplier;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer {
     float mutationProbability=0.1f;
-    float crossoverProbability=0.5f;
+<<<<<<< HEAD
+    float crossoverProbability=0.2f;
+=======
+    float crossoverProbability=0.3f;
+>>>>>>> 07c86a8ac05e53788cf9a94a95ec8fddcace3289
     final Random random=new Random();
-    public final Supplier<Double> randomizer=()->Utilities.rand(random, -5,5);
+    public final Supplier<Double> randomizer=()->Utilities.rand(random, -10,10);
 
     public DefaultGeneDestroyer(float mutationProbability, float crossoverProbability) {
         this.mutationProbability = mutationProbability;

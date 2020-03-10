@@ -141,7 +141,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     	//grey and white color
         Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
         //length of sensor beams
-        var beamStrength=width*2;
+        var beamStrength=width*4;
         float[] dist={0f,1f};
         //color fades for sensor beams
         var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(midX, midY), (float) beamStrength, dist, colors);
@@ -172,9 +172,16 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         var distance=obstacles.parallelStream()
                 .filter(p->p.intersectsLine(sensor))
                 .mapToDouble(p->findIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
-        distance.ifPresent(d->d=d*SENSOR_MAX/beamStrength);
-        proximitySensors[index]=distance.orElse(SENSOR_MAX);
-        inputLayerOfNN[index]=distance.orElse(SENSOR_MAX);
+        double d=0;
+        double funct=SENSOR_MAX;
+//        if(distance.isPresent()) { d=distance.getAsDouble()*SENSOR_MAX/beamStrength; }
+//        else d=SENSOR_MAX;
+        if(distance.isPresent()) {
+            d=distance.getAsDouble()*SENSOR_MAX/beamStrength;
+            funct=Math.exp(width-d);
+        }
+        proximitySensors[index]=d;
+        inputLayerOfNN[index]=funct;
     }
 
     //finds intersection point no matter what the orientation of the lines

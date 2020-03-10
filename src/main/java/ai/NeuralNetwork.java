@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class NeuralNetwork extends RobotController implements Cloneable, IRobotController, Serializable {
-        public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) {
+        public NeuralNetwork(Activation activation, int... numberOfNodesPerLayer) { 
         super(activation);
         initializeRandomArray(numberOfNodesPerLayer);
     }

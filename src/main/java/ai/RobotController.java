@@ -68,4 +68,10 @@ public abstract class RobotController implements IRobotController, Cloneable, Se
             oos.writeObject(weights);
         }
     }
+
+    public void setInputByValue(double ...values){
+        for(var i=0;i<values.length;i++){
+            layers[0].getMatrix().data[i]=values[i];
+        }
+    }
 }
