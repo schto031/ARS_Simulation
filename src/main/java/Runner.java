@@ -1,7 +1,4 @@
-import ai.NeuralNetwork;
-import ai.RecurrentNeuralNetwork;
-import ai.RobotController;
-import ai.SinglePointGeneDestroyer;
+import ai.*;
 import common.Arena;
 import common.Utilities;
 
@@ -16,6 +13,7 @@ import java.awt.geom.Point2D;
 import java.io.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -130,13 +128,18 @@ public class Runner extends JFrame {
         public void initializeNeuralNetworkControlThread(){
             // NN control thread
             controllerHandle=Arrays.stream(robots).map(r->executor.scheduleWithFixedDelay(()->{
-                var controller=controllers[r.getId()];
-                controller.forwardPropagate();
-                var outputs=controller.getOutput();
-                if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();
-                else r.decrementLeftVelocity();
-                if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
-                else r.decrementRightVelocity();
+                try{
+                    var controller=controllers[r.getId()];
+                    controller.forwardPropagate();
+                    var outputs=controller.getOutput();
+                    if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();
+                    else r.decrementLeftVelocity();
+                    if(outputs[1]>NN_THRESHOLD) r.incrementRightVelocity();
+                    else r.decrementRightVelocity();
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
             },1500,DELAY*4, TimeUnit.MILLISECONDS)).collect(Collectors.toUnmodifiableList());
         }
 
@@ -156,7 +159,6 @@ public class Runner extends JFrame {
             // mutate/crossover logic goes here
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){ controllers[i]=winners.get(i%winners.size()).clone(); }
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){
-                if(random.nextBoolean()) continue;
                 int r1, r2;
                 do{
                     r1=random.nextInt(NUMBER_OF_ROBOTS);
@@ -166,7 +168,7 @@ public class Runner extends JFrame {
             }
             for (var controller : controllers) { controller.ID = UUID.randomUUID(); }
             for(var i=0;i<NUMBER_OF_ROBOTS;i++){
-                if(random.nextBoolean()) continue;
+//                if(random.nextBoolean()) continue;
                 gd.mutate(controllers[i]);
             }
         }
@@ -175,7 +177,8 @@ public class Runner extends JFrame {
         
         public void nextGen() {
         	controllerHandle.forEach(h->h.cancel(true));
-        	var evals=Arrays.stream(robots).map(Evaluation::evaluationFunction).collect(Collectors.toUnmodifiableList());
+            controllerHandle.forEach(Future::isDone);
+            var evals=Arrays.stream(robots).map(Evaluation::evaluationFunction).collect(Collectors.toUnmodifiableList());
             var min=evals.stream().mapToDouble(d->d).min().orElse(0);
             var max=evals.stream().mapToDouble(d->d).max().orElse(0);
             var avg=evals.stream().mapToDouble(d->d).average().orElse(0);

@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, IRobotController {
     private int recurrentLayer;
-    private transient CircularFifoQueue<SimpleMatrix> previousValues;
+    private final CircularFifoQueue<SimpleMatrix> previousValues;
     private int trueInputLayerSize;
 
     @Override
@@ -39,11 +39,10 @@ public class RecurrentNeuralNetwork extends NeuralNetwork implements Cloneable, 
 
     @Override
     public void forwardPropagate() {
-        if(previousValues.isAtFullCapacity()) {
-            assert previousValues.peek() != null;
+        if(previousValues.isAtFullCapacity() && null!=layers[0] && previousValues.peek() != null) {
             layers[0].insertIntoThis(trueInputLayerSize, 0, previousValues.peek());
         }
-        previousValues.add(layers[recurrentLayer].copy());
+        synchronized (previousValues){ previousValues.add(layers[recurrentLayer].copy()); }
         super.forwardPropagate();
     }
 

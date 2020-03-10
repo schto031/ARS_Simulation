@@ -6,7 +6,7 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 public class DefaultGeneDestroyer implements IGeneDestroyer {
-    float mutationProbability=0.01f;
+    float mutationProbability=0.1f;
     float crossoverProbability=0.5f;
     final Random random=new Random();
     public final Supplier<Double> randomizer=()->Utilities.rand(random, -5,5);
