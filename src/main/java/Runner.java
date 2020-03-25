@@ -7,8 +7,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 import java.util.Arrays;
-import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -17,16 +17,19 @@ public class Runner extends JFrame {
 
         private volatile Robo robo;
         private Arena arena= Arena.getKalmann();
+        private Path2D robotPathTrace =new Path2D.Double();
 
         //Written by Swapneel + Tom
         public RoboPanel(Robo robo) {
             this.robo=robo;
-            robo.setPosition(arena.getInitialLocation());
+            robo
+                    .setBeacons(arena.getBeacons())
+                    .setPosition(arena.getInitialLocation());
             var executor=new ScheduledThreadPoolExecutor(1);
             executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
             executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
-            var rand=new Random();
             robo.setObstacles(arena.getObstacles());
+            robotPathTrace.moveTo(robo.getCenter().x, robo.getCenter().y);
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
                 public void mouseDragged(MouseEvent mouseEvent) { }
@@ -44,14 +47,25 @@ public class Runner extends JFrame {
             super.paint(g);
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             robo.draw((Graphics2D) g);
+
+            // Draw obstacles
             for(var a:arena.getObstacles())
                 ((Graphics2D) g).draw(a);
+
+            // Draw balls (beacons)
             var rad=10D;
             for(var b:arena.getBeacons()){
                 ((Graphics2D) g).setPaint(new Color(0f,0.8f, 0.8f, 0.5f));
                 var e=new Ellipse2D.Double(b.x-rad/2, b.y-rad/2, rad, rad);
                 ((Graphics2D) g).fill(e);
             }
+
+            // Draw trace
+            var center=robo.getCenter();
+            ((Graphics2D) g).setStroke(new BasicStroke(5));
+            ((Graphics2D) g).setPaint(new Color(0.8f,0.2f, 0.8f, 0.5f));
+            robotPathTrace.lineTo(center.x, center.y);
+            ((Graphics2D) g).draw(robotPathTrace);
         }
     }
     //Written by Swapneel
@@ -93,7 +107,7 @@ public class Runner extends JFrame {
             @Override
             public void keyReleased(KeyEvent keyEvent) { }
         });
-        getRootPane().registerKeyboardAction(e->{ System.exit(0); }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e->System.exit(0), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 

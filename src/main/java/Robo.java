@@ -1,10 +1,9 @@
 
 import common.Coordinate;
+import org.ejml.simple.SimpleMatrix;
 
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
+import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +17,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     protected Coordinate.Double pos=new Coordinate.Double(400,300);
     private double halfWidth;
     private Coordinate.Double center;
-    private double vl, vr, orientation=0;
+    private double vr, vl, orientation=0;
     protected final double width;
     private final Runnable postUpdateHook;
     private final double delta =0.05;
@@ -34,6 +33,13 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private final double SENSOR_MAX=100;
     private final double VELOCITY_MAX=20;
     public AtomicInteger collisions=new AtomicInteger();
+    private List<Coordinate.Double> beacons=new ArrayList<>();
+    private List<Coordinate.Double> beaconsInRange=new ArrayList<>();
+
+    public Robo setBeacons(List<Coordinate.Double> beacons) {
+        this.beacons = beacons;
+        return this;
+    }
 
     public Robo(double width, Runnable postUpdateHook, int id) {
         this.width=width;
@@ -53,7 +59,6 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         try{
             robotBody =new Ellipse2D.Double(pos.x,pos.y,width,width);
             graphics.draw(robotBody);
-            halfWidth=width/2;
             var midX=pos.x+halfWidth;
             var midY=pos.y+halfWidth;
             //center of the robot circle
@@ -61,7 +66,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
             graphics.drawLine((int)midX,(int)midY,(int)(midX+halfWidth*Math.cos(-orientation)),(int)(midY-halfWidth*Math.sin(-orientation)));
             drawSensors(graphics, midX, midY);
             if (null!=allDust) collectDust();
-            if (null!=shortest) { drawLine(graphics, shortest.keySet()); }
+            // draw shortest lines
+//            if (null!=shortest) { drawLine(graphics, shortest.keySet()); }
         } finally {
             graphics.dispose();
         }
@@ -108,23 +114,23 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     //Written by Swapneel
     @Override
     public void run() {
-        var v=(vl + vr)/2;
+        var v=(vr + vl)/2;
         var collidingLines=shortest.entrySet().parallelStream().filter(Map.Entry::getValue);
-        if(vl == vr){
+        if(vr == vl){
             pos.testAndUpdate(this::collisionFunction,
                     x->x+v*Math.cos(-orientation)* delta,
                     y->y-v*Math.sin(-orientation)* delta,
                     point2D -> collisionHandler(point2D, collidingLines));
-        } else if(vl ==-vr){
-            var omega=(vr - vl)/width;
+        } else if(vr ==-vl){
+            var omega=(vl - vr)/width;
             orientation+=omega* delta;
             pos.testAndUpdate(this::collisionFunction,
                     x->x+v*Math.cos(-orientation)* delta,
                     y->y-v*Math.sin(-orientation)* delta,
                     point2D -> collisionHandler(point2D, collidingLines));
         } else {
-            var R=(width/2)*(vl + vr)/(vr - vl);
-            var omega=(vr - vl)/width;
+            var R=(width/2)*(vr + vl)/(vl - vr);
+            var omega=(vl - vr)/width;
             var ICCX=pos.x-(R*Math.sin(orientation));
             var ICCY=pos.y+(R*Math.cos(orientation));
             pos.testAndUpdate(this::collisionFunction,
@@ -139,27 +145,36 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     //written by Swapneel + Tom
     private void drawSensors(Graphics2D graphics, double midX, double midY){
     	//grey and white color
-        Color[] colors={new Color(1,0,0,0.3f), new Color(0,0,0,0f)};
+        Color[] colors={new Color(1,0,0.5f,0.3f), new Color(1,0,0.5f,0.05f)};
         //length of sensor beams
-        var beamStrength=width*4;
+        var beamStrength=width*8;
         float[] dist={0f,1f};
+        var center=getCenter();
         //color fades for sensor beams
-        var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(midX, midY), (float) beamStrength, dist, colors);
+        var halfbeamStrength=beamStrength/2;
+        var radialGradientPaint=new RadialGradientPaint(new Point2D.Double(center.x, center.y), (float) halfbeamStrength, dist, colors);
         graphics.setPaint(radialGradientPaint);
-        //determine the position of the 12 sensor lines
-        var j=0;
-        for(var i=0d;i<Math.PI*2;i+=(Math.PI*2/proximitySensors.length)){
-            var line=new Line2D.Double(center, new Point2D.Double(midX+beamStrength*Math.cos(-orientation+i), midY-beamStrength*Math.sin(-orientation+i)));
-            senseDistance(line,j++, beamStrength);
-            //line length gets adjusted regarding the possibility of hitting obstacle
-            line = new Line2D.Double(center, new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i)));
-            graphics.draw(line);
-            Point2D distanceStringPosition = new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i));
-            graphics.setPaint(new Color(1,0,0,0.3f));
-            //
-            graphics.drawString(Integer.toString((int)proximitySensors[j-1]) , (int) distanceStringPosition.getX(), (int)distanceStringPosition.getY() );
-            graphics.setPaint(radialGradientPaint);
-        }
+//        //determine the position of the 12 sensor lines
+//        var j=0;
+//        for(var i=0d;i<Math.PI*2;i+=(Math.PI*2/proximitySensors.length)){
+//            var line=new Line2D.Double(center, new Point2D.Double(midX+beamStrength*Math.cos(-orientation+i), midY-beamStrength*Math.sin(-orientation+i)));
+//            senseDistance(line,j++, beamStrength);
+//            //line length gets adjusted regarding the possibility of hitting obstacle
+//            line = new Line2D.Double(center, new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i)));
+//            graphics.draw(line);
+//            Point2D distanceStringPosition = new Point2D.Double(midX+proximitySensors[j-1]*Math.cos(-orientation+i), midY-proximitySensors[j-1]*Math.sin(-orientation+i));
+//            graphics.setPaint(new Color(1,0,0,0.3f));
+//            //
+//            graphics.drawString(Integer.toString((int)proximitySensors[j-1]) , (int) distanceStringPosition.getX(), (int)distanceStringPosition.getY() );
+////            graphics.setPaint(radialGradientPaint);
+//        }
+        // Draw omnidirectional sensor
+        var omniSensor=new Ellipse2D.Double(center.x-halfbeamStrength, center.y-halfbeamStrength, beamStrength, beamStrength);
+        graphics.fill(omniSensor);
+        // Draw located beacons
+        graphics.setPaint(Color.GREEN);
+        beaconsInRange=beacons.stream().filter(b->omniSensor.contains(b.x, b.y)).collect(Collectors.toUnmodifiableList());
+        beaconsInRange.forEach(b-> graphics.draw(new Line2D.Double(center.x, center.y, b.x, b.y)));
     }
 
     public void collectDust(){
@@ -221,8 +236,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         return "Robo{" +
                 "x=" + pos.x +
                 ", y=" + pos.y +
-                ", vX=" + vl +
-                ", vY=" + vr +
+                ", vX=" + vr +
+                ", vY=" + vl +
                 ", orientation=" + orientation +
                 ", width=" + width +
                 ", obstacles="+obstacles.size()+
@@ -233,16 +248,16 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     }
 
     @Override
-    public void incrementLeftVelocity() { if(vl<this.VELOCITY_MAX) vl++; }
+    public void incrementLeftVelocity() { if(vr <this.VELOCITY_MAX) vr++; }
 
     @Override
-    public void incrementRightVelocity() { if(vr<this.VELOCITY_MAX) vr++; }
+    public void incrementRightVelocity() { if(vl <this.VELOCITY_MAX) vl++; }
 
     @Override
-    public void decrementLeftVelocity() { if(vl>-this.VELOCITY_MAX) vl--; }
+    public void decrementLeftVelocity() { if(vr >-this.VELOCITY_MAX) vr--; }
 
     @Override
-    public void decrementRightVelocity() { if(vr>-this.VELOCITY_MAX) vr--; }
+    public void decrementRightVelocity() { if(vl >-this.VELOCITY_MAX) vl--; }
 
     @Override
     public void incrementBothVelocity() { incrementLeftVelocity(); incrementRightVelocity(); }
@@ -251,7 +266,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     public void decrementBothVelocity() { decrementLeftVelocity(); decrementRightVelocity(); }
 
     @Override
-    public void stop() { vl=0; vr=0; }
+    public void stop() { vr =0; vl =0; }
 
     @Override
     public void setPosition(double x, double y) { this.pos.x=x; this.pos.y=y; }
@@ -260,18 +275,24 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 
     @Override
     public void setVelocity(Function<Double, Double> left, Function<Double, Double> right) {
-        this.vl=left.apply(this.vl);
-        this.vr=right.apply(this.vr);
+        this.vr =left.apply(this.vr);
+        this.vl =right.apply(this.vl);
     }
 
     @Override
     public double[] getSensorValues() { return this.proximitySensors; }
 
-    public double getDifferentialVelocity(){ return vl-vr; }
+    public double getDifferentialVelocity(){ return vr - vl; }
 
     public void resetParameters(){
         coveredDust.clear();
         collisions.set(0);
         orientation=0;
     }
+
+    public Coordinate.Double getCenter(){ return new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth); }
+
+    public List<Coordinate.Double> getBeaconsInRange() { return beaconsInRange; }
+
+    public SimpleMatrix getPose(){ return new SimpleMatrix(1, 3, false, pos.x, pos.y, orientation); }
 }

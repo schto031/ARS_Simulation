@@ -35,7 +35,7 @@ public class Arena {
         var w3 = (Line2D) new Line2D.Double(200,200, 200, 500);
         var w4 = (Line2D) new Line2D.Double(500,300, 500, 580);
 
-        var initialLocation=new Coordinate.Double(20,50);
+        var initialLocation=new Coordinate.Double(45,50);
 
         var obstacles=List.of(upperBorder, lowerBorder, leftBorder, rightBorder, w1, w2, w3, w4);
         var beacons= obstacles
