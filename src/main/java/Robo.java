@@ -35,6 +35,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     public AtomicInteger collisions=new AtomicInteger();
     private List<Coordinate.Double> beacons=new ArrayList<>();
     private List<Coordinate.Double> beaconsInRange=new ArrayList<>();
+    double omega, v;
 
     public Robo setBeacons(List<Coordinate.Double> beacons) {
         this.beacons = beacons;
@@ -100,7 +101,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 
     //Written by Swapneel
     private Coordinate.Double collisionHandler(Coordinate.Double point2D, Stream<Map.Entry<Line2D, Boolean>> filteredCollidingLines){
-        var magnitude=filteredCollidingLines.map(c-> normalize(c.getKey()))
+        var magnitude=filteredCollidingLines.distinct().map(c-> normalize(c.getKey()))
                 .reduce((a,d)->{
                     a.add(d);
                     return a;
@@ -114,15 +115,15 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     //Written by Swapneel
     @Override
     public void run() {
-        var v=(vr + vl)/2;
-        var collidingLines=shortest.entrySet().parallelStream().filter(Map.Entry::getValue);
+        v=(vr + vl)/2;
+        var collidingLines=shortest.entrySet().parallelStream().distinct().filter(Map.Entry::getValue);
         if(vr == vl){
             pos.testAndUpdate(this::collisionFunction,
                     x->x+v*Math.cos(-orientation)* delta,
                     y->y-v*Math.sin(-orientation)* delta,
                     point2D -> collisionHandler(point2D, collidingLines));
         } else if(vr ==-vl){
-            var omega=(vl - vr)/width;
+            omega=(vl - vr)/width;
             orientation+=omega* delta;
             pos.testAndUpdate(this::collisionFunction,
                     x->x+v*Math.cos(-orientation)* delta,
@@ -130,7 +131,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
                     point2D -> collisionHandler(point2D, collidingLines));
         } else {
             var R=(width/2)*(vr + vl)/(vl - vr);
-            var omega=(vl - vr)/width;
+            omega=(vl - vr)/width;
             var ICCX=pos.x-(R*Math.sin(orientation));
             var ICCY=pos.y+(R*Math.cos(orientation));
             pos.testAndUpdate(this::collisionFunction,
@@ -175,6 +176,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
         graphics.setPaint(Color.GREEN);
         beaconsInRange=beacons.stream().filter(b->omniSensor.contains(b.x, b.y)).collect(Collectors.toUnmodifiableList());
         beaconsInRange.forEach(b-> graphics.draw(new Line2D.Double(center.x, center.y, b.x, b.y)));
+        shortest.clear();
     }
 
     public void collectDust(){
