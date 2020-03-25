@@ -297,4 +297,5 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     public List<Coordinate.Double> getBeaconsInRange() { return beaconsInRange; }
 
     public SimpleMatrix getPose(){ return new SimpleMatrix(1, 3, false, pos.x, pos.y, orientation); }
+    public SimpleMatrix getMotionModel(){ return new SimpleMatrix(1, 2, false, v, omega); }
 }
