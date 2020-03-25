@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,7 +18,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     protected Coordinate.Double pos=new Coordinate.Double(400,300);
     private double halfWidth;
     private Coordinate.Double center;
-    private double vr, vl, orientation=0;
+    double vr, vl, orientation=0;
     protected final double width;
     private final Runnable postUpdateHook;
     private final double delta =0.05;
@@ -36,6 +37,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     private List<Coordinate.Double> beacons=new ArrayList<>();
     private List<Coordinate.Double> beaconsInRange=new ArrayList<>();
     double omega, v;
+    AtomicInteger dt=new AtomicInteger();
+    private AtomicLong previousTime=new AtomicLong(System.currentTimeMillis());
 
     public Robo setBeacons(List<Coordinate.Double> beacons) {
         this.beacons = beacons;
@@ -115,6 +118,11 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     //Written by Swapneel
     @Override
     public void run() {
+        // Update dt
+        var curTime=System.currentTimeMillis();
+        dt.set((int) (curTime-previousTime.get()));
+        previousTime.set(curTime);
+        // Update velocity
         v=(vr + vl)/2;
         var collidingLines=shortest.entrySet().parallelStream().distinct().filter(Map.Entry::getValue);
         if(vr == vl){
@@ -148,7 +156,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     	//grey and white color
         Color[] colors={new Color(1,0,0.5f,0.3f), new Color(1,0,0.5f,0.05f)};
         //length of sensor beams
-        var beamStrength=width*8;
+        var beamStrength=width*16;
         float[] dist={0f,1f};
         var center=getCenter();
         //color fades for sensor beams
@@ -293,9 +301,10 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     }
 
     public Coordinate.Double getCenter(){ return new Coordinate.Double(pos.x+halfWidth, pos.y+halfWidth); }
-
     public List<Coordinate.Double> getBeaconsInRange() { return beaconsInRange; }
-
-    public SimpleMatrix getPose(){ return new SimpleMatrix(1, 3, false, pos.x, pos.y, orientation); }
-    public SimpleMatrix getMotionModel(){ return new SimpleMatrix(1, 2, false, v, omega); }
+    public SimpleMatrix getPose(){
+        var center=getCenter();
+        return new SimpleMatrix(3, 1, true, center.x, center.y, orientation);
+    }
+    public SimpleMatrix getMotionModel(){ return new SimpleMatrix(2, 1, true, v, omega); }
 }

@@ -1,4 +1,6 @@
 import common.Arena;
+import common.DashedStroke;
+import org.ejml.simple.SimpleMatrix;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
-import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +20,10 @@ public class Runner extends JFrame {
         private volatile Robo robo;
         private Arena arena= Arena.getKalmann();
         private Path2D robotPathTrace =new Path2D.Double();
+        private Path2D robotPredictTrace =new Path2D.Double();
+        private Path2D robotCorrectTrace =new Path2D.Double();
+
+        private KalmanFilter kalmanFilter;
 
         //Written by Swapneel + Tom
         public RoboPanel(Robo robo) {
@@ -25,11 +31,65 @@ public class Runner extends JFrame {
             robo
                     .setBeacons(arena.getBeacons())
                     .setPosition(arena.getInitialLocation());
+            kalmanFilter=new KalmanFilter(robo);
             var executor=new ScheduledThreadPoolExecutor(1);
-            executor.scheduleAtFixedRate(robo,0,8, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
-            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(robo,0,16, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
+//            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()->kalmanFilter.getValues(),0,1, TimeUnit.SECONDS);
+
+            executor.scheduleAtFixedRate(()->{
+                try{
+
+                    var orientation=robo.orientation;
+                    // Individual beacons and their corresponding functions in radial coordinate system
+                    var fZ=new SimpleMatrix(3,robo.getBeaconsInRange().size());
+                    var i=0;
+                    for(var b:robo.getBeaconsInRange()){
+                        var center=robo.getCenter();
+                        fZ.set(0,i,center.distance(b));
+                        fZ.set(1,i,Math.atan2(b.y-center.y, b.x-center.x)-orientation);
+                        fZ.set(2,i,i++);
+                    }
+                    // Average of all beacons in radial coordinate system
+                    var tZ=new SimpleMatrix(3,1);
+                    for(i=0;i<fZ.numRows();i++){
+                        var t=fZ.extractVector(true, i);
+                        var mean=t.elementSum()/t.getMatrix().data.length;
+                        tZ.set(i,0, mean);
+                    }
+                    // Convert it to cartesian
+                    var Z=new SimpleMatrix(3,1);
+                    Z.set(0,0, tZ.get(0,0)*Math.cos(orientation));
+                    Z.set(1,0, tZ.get(0,0)*Math.sin(orientation));
+                    Z.set(2,0, tZ.get(1,0));
+
+                    // Add some noise
+                    var r=new Random();
+                    var scalingFactor=50;
+                    var noise=new SimpleMatrix(3, 1, true,
+                            r.nextGaussian()*scalingFactor,
+                            r.nextGaussian()*scalingFactor,
+                            r.nextGaussian()*scalingFactor);
+                    Z=Z.plus(noise);
+
+                    var covariance= SimpleMatrix.identity(3);
+
+                    var b=kalmanFilter.predict(robo.getPose(), covariance, robo.getMotionModel(), Z);
+                    robotPredictTrace.lineTo(b.mu.get(0,0), b.mu.get(1,0));
+                    robotCorrectTrace.lineTo(b.correctedMu.get(0,0), b.correctedMu.get(1,0));
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            },0,16, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
+
             robo.setObstacles(arena.getObstacles());
+
+            // Initial locations of traces
             robotPathTrace.moveTo(robo.getCenter().x, robo.getCenter().y);
+            robotCorrectTrace.moveTo(robo.getCenter().x, robo.getCenter().y);
+            robotPredictTrace.moveTo(robo.getCenter().x, robo.getCenter().y);
+
             addMouseMotionListener(new MouseMotionListener() {
                 @Override
                 public void mouseDragged(MouseEvent mouseEvent) { }
@@ -60,12 +120,22 @@ public class Runner extends JFrame {
                 ((Graphics2D) g).fill(e);
             }
 
-            // Draw trace
+            // Draw actual trace
             var center=robo.getCenter();
-            ((Graphics2D) g).setStroke(new BasicStroke(5));
-            ((Graphics2D) g).setPaint(new Color(0.8f,0.2f, 0.8f, 0.5f));
+            ((Graphics2D) g).setStroke(new BasicStroke(3));
+            ((Graphics2D) g).setPaint(new Color(0.2f,0.6f, 0.2f, 0.3f));
             robotPathTrace.lineTo(center.x, center.y);
             ((Graphics2D) g).draw(robotPathTrace);
+
+            // Draw predicted trace
+            ((Graphics2D) g).setStroke(new DashedStroke(3));
+            ((Graphics2D) g).setPaint(new Color(0.2f,0.2f, 0.8f, 0.3f));
+            ((Graphics2D) g).draw(robotPredictTrace);
+
+            // Draw corrected trace
+            ((Graphics2D) g).setStroke(new BasicStroke(3));
+            ((Graphics2D) g).setPaint(new Color(0.6f,0.2f, 0.2f, 0.3f));
+            ((Graphics2D) g).draw(robotCorrectTrace);
         }
     }
     //Written by Swapneel
@@ -88,16 +158,20 @@ public class Runner extends JFrame {
 
             @Override
             public void keyPressed(KeyEvent keyEvent) {
-                switch (keyEvent.getKeyChar()){
-                    case 'w': robo.incrementBothVelocity(); break;
-                    case 's': robo.decrementBothVelocity(); break;
-                    case 'a': robo.incrementLeftVelocity(); robo.decrementRightVelocity(); break;
-                    case 'd': robo.decrementLeftVelocity(); robo.incrementRightVelocity(); break;
+                switch (keyEvent.getKeyCode()){
+                    case KeyEvent.VK_UP:
+                    case KeyEvent.VK_W: robo.incrementBothVelocity(); break;
+                    case KeyEvent.VK_DOWN:
+                    case KeyEvent.VK_S: robo.decrementBothVelocity(); break;
+                    case KeyEvent.VK_LEFT:
+                    case KeyEvent.VK_A: robo.incrementLeftVelocity(); robo.decrementRightVelocity(); break;
+                    case KeyEvent.VK_RIGHT:
+                    case KeyEvent.VK_D: robo.decrementLeftVelocity(); robo.incrementRightVelocity(); break;
 //                    case 'w': robo.incrementRightVelocity(); break;
 //                    case 's': robo.decrementRightVelocity(); break;
 //                    case 'o': robo.incrementLeftVelocity(); break;
 //                    case 'l': robo.decrementLeftVelocity(); break;
-                    case 'x': robo.stop(); break;
+                    case KeyEvent.VK_X: robo.stop(); break;
                     case 'r':
                         var bounds=getBounds();
                         robo.setPosition((double) bounds.width/2,robo.pos.y=(double) bounds.height/2);
