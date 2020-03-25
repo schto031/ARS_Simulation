@@ -18,7 +18,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     protected Coordinate.Double pos=new Coordinate.Double(400,300);
     private double halfWidth;
     private Coordinate.Double center;
-    private double vl, vr, orientation;
+    private double vl, vr, orientation=0;
     protected final double width;
     private final Runnable postUpdateHook;
     private final double delta =0.05;
@@ -60,7 +60,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
             center=new Coordinate.Double(midX, midY);
             graphics.drawLine((int)midX,(int)midY,(int)(midX+halfWidth*Math.cos(-orientation)),(int)(midY-halfWidth*Math.sin(-orientation)));
             drawSensors(graphics, midX, midY);
-            collectDust();
+            if (null!=allDust) collectDust();
             if (null!=shortest) { drawLine(graphics, shortest.keySet()); }
         } finally {
             graphics.dispose();
@@ -256,6 +256,8 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     @Override
     public void setPosition(double x, double y) { this.pos.x=x; this.pos.y=y; }
 
+    public void setPosition(Coordinate.Double d) { this.pos=d; }
+
     @Override
     public void setVelocity(Function<Double, Double> left, Function<Double, Double> right) {
         this.vl=left.apply(this.vl);
@@ -270,5 +272,6 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     public void resetParameters(){
         coveredDust.clear();
         collisions.set(0);
+        orientation=0;
     }
 }
