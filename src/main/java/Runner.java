@@ -8,11 +8,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Runner extends JFrame {
     private static class RoboPanel extends JPanel{
@@ -22,8 +26,10 @@ public class Runner extends JFrame {
         private Path2D robotPathTrace =new Path2D.Double();
         private Path2D robotPredictTrace =new Path2D.Double();
         private Path2D robotCorrectTrace =new Path2D.Double();
-
+        private final List<Shape> predictedCovs=new ArrayList<>();
+        private final List<Shape> correctedCovs=new ArrayList<>();
         private KalmanFilter kalmanFilter;
+        private final int sampleAtNumberOfTicks=10;
 
         //Written by Swapneel + Tom
         public RoboPanel(Robo robo) {
@@ -36,7 +42,7 @@ public class Runner extends JFrame {
             executor.scheduleAtFixedRate(robo,0,16, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
 //            executor.scheduleWithFixedDelay(()-> System.out.println(Arrays.toString(robo.proximitySensors)+" "+robo),0,1, TimeUnit.SECONDS);
             executor.scheduleWithFixedDelay(()->kalmanFilter.getValues(),0,1, TimeUnit.SECONDS);
-
+            var tick=new AtomicLong(1);
             executor.scheduleAtFixedRate(()->{
                 try{
 
@@ -65,7 +71,7 @@ public class Runner extends JFrame {
 
                     // Add some noise
                     var r=new Random();
-                    var scalingFactor=50;
+                    var scalingFactor=10;
                     var noise=new SimpleMatrix(3, 1, true,
                             r.nextGaussian()*scalingFactor,
                             r.nextGaussian()*scalingFactor,
@@ -75,13 +81,26 @@ public class Runner extends JFrame {
                     var covariance= SimpleMatrix.identity(3);
 
                     var b=kalmanFilter.predict(robo.getPose(), covariance, robo.getMotionModel(), Z);
-                    robotPredictTrace.lineTo(b.mu.get(0,0), b.mu.get(1,0));
-                    robotCorrectTrace.lineTo(b.correctedMu.get(0,0), b.correctedMu.get(1,0));
-
+                    var x=b.mu.get(0,0);
+                    var y=b.mu.get(1,0);
+                    robotPredictTrace.lineTo(x,y);
+                    if(tick.get()%sampleAtNumberOfTicks==0) predictedCovs.add(
+                            getEllipseFromCenter(x,y,
+                                    Math.pow(b.sigma.get(0,0),2),
+                                    Math.pow(b.sigma.get(1,1),2),
+                                    b.sigma.get(2,2)));
+                    x=b.correctedMu.get(0,0);
+                    y=b.correctedMu.get(1,0);
+                    robotCorrectTrace.lineTo(x, y);
+                    if(tick.getAndIncrement()%sampleAtNumberOfTicks==0) correctedCovs.add(
+                            getEllipseFromCenter(x,y,
+                                    Math.pow(b.correctedSigma.get(0,0),2),
+                                    Math.pow(b.correctedSigma.get(1,1),2),
+                                    b.correctedSigma.get(2,2)));
                 } catch (Exception e){
                     e.printStackTrace();
                 }
-            },0,16, TimeUnit.MILLISECONDS);  // Roughly 120 FPS if your machine can support
+            },0,64, TimeUnit.MILLISECONDS);
 
             robo.setObstacles(arena.getObstacles());
 
@@ -127,15 +146,28 @@ public class Runner extends JFrame {
             robotPathTrace.lineTo(center.x, center.y);
             ((Graphics2D) g).draw(robotPathTrace);
 
-            // Draw predicted trace
-            ((Graphics2D) g).setStroke(new DashedStroke(3));
+            // Draw predicted covariance and trace
+            ((Graphics2D) g).setPaint(new Color(0.2f,0.2f, 0.8f, 0.6f));
+            ((Graphics2D) g).setStroke(new BasicStroke(2));
+            predictedCovs.forEach(((Graphics2D) g)::draw);
             ((Graphics2D) g).setPaint(new Color(0.2f,0.2f, 0.8f, 0.3f));
+            ((Graphics2D) g).setStroke(new DashedStroke(3));
             ((Graphics2D) g).draw(robotPredictTrace);
 
-            // Draw corrected trace
-            ((Graphics2D) g).setStroke(new BasicStroke(3));
+            // Draw corrected covariance and trace
+            ((Graphics2D) g).setPaint(new Color(0.6f,0.2f, 0.2f, 0.6f));
+            ((Graphics2D) g).setStroke(new BasicStroke(2));
+            correctedCovs.forEach(((Graphics2D) g)::draw);
             ((Graphics2D) g).setPaint(new Color(0.6f,0.2f, 0.2f, 0.3f));
+            ((Graphics2D) g).setStroke(new BasicStroke(3));
             ((Graphics2D) g).draw(robotCorrectTrace);
+        }
+
+        private Shape getEllipseFromCenter(double x, double y, double width, double height, double rotation) {
+            double newX = x - width / 2.0;
+            double newY = y - height / 2.0;
+            var ellipse = new Ellipse2D.Double(newX, newY, width, height);
+            return AffineTransform.getRotateInstance(rotation, x, y).createTransformedShape(ellipse);
         }
     }
     //Written by Swapneel
