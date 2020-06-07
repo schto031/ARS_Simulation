@@ -1,6 +1,6 @@
-package main.java.ai;
+package ai;
 
-import main.java.common.Utilities;
+import common.Utilities;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.ejml.simple.SimpleMatrix;
 

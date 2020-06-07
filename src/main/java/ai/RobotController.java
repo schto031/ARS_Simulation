@@ -1,4 +1,4 @@
-package main.java.ai;
+package ai;
 
 import org.ejml.simple.SimpleMatrix;
 

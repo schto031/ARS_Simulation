@@ -1,5 +1,4 @@
-package main.java;
-import main.java.ai.IRobotController;
+import ai.IRobotController;
 
 import javax.swing.*;
 import java.awt.*;

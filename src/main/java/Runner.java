@@ -1,10 +1,8 @@
-package main.java;
-import main.java.ai.DefaultGeneDestroyer;
-import main.java.ai.NeuralNetwork;
-import main.java.ai.RecurrentNeuralNetwork;
-import main.java.ai.RobotController;
-import main.java.common.Arena;
-import main.java.common.Utilities;
+import ai.DefaultGeneDestroyer;
+import ai.RecurrentNeuralNetwork;
+import ai.RobotController;
+import common.Arena;
+import common.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,7 +109,7 @@ public class Runner extends JFrame {
             super.setPreferredSize(preferredSize);
             var rand=new Random();
             var r=new Rectangle(preferredSize);
-            for(var i=0;i<dust.length;i++){ dust[i]=Utilities.rand(rand, r); }
+            for(var i=0;i<dust.length;i++){ dust[i]= Utilities.rand(rand, r); }
         }
 
         private void initializeNeuralNetwork(){

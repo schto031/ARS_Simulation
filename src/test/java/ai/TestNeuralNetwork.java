@@ -1,4 +1,4 @@
-package test.java.ai;
+package ai;
 
 import org.junit.jupiter.api.Test;
 

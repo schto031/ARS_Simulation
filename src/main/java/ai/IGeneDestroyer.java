@@ -1,4 +1,4 @@
-package main.java.ai;
+package ai;
 
 public interface IGeneDestroyer {
     void mutate(RobotController nn);

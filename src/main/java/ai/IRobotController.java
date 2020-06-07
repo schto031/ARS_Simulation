@@ -1,4 +1,4 @@
-package main.java.ai;
+package ai;
 
 public interface IRobotController {
     double[] getInput();
