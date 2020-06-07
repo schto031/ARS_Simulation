@@ -60,12 +60,12 @@ public class Runner extends JFrame {
             // Initialize a scheduler
             executor=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
             // Robots position calculation thread
-            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));             // Each robot on a different thread
-//            executor.scheduleAtFixedRate(()->Arrays.stream(robo).forEach(Robo::run),0,8, TimeUnit.MILLISECONDS);    // All robots on single thread
+//            Arrays.stream(robo).forEach(r->executor.scheduleAtFixedRate(r,0,8, TimeUnit.MILLISECONDS));             // Each robot on a different thread
+            executor.scheduleAtFixedRate(()->Arrays.stream(robo).forEach(Robo::run),0,8, TimeUnit.MILLISECONDS);    // All robots on single thread
 
             
             // Generation thread
-            executor.scheduleWithFixedDelay(()-> nextGen(),15,15,TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(this::nextGen,15,15,TimeUnit.SECONDS);
             // Display thread
             executor.scheduleAtFixedRate(()->SwingUtilities.invokeLater(this::repaint),0,8, TimeUnit.MILLISECONDS);
             // Printing thread
@@ -125,6 +125,7 @@ public class Runner extends JFrame {
             // NN control thread
             controllerHandle=Arrays.stream(robots).map(r->executor.scheduleWithFixedDelay(()->{
                 var controller=controllers[r.getId()];
+                if(r.getId()==0) System.out.println(Arrays.toString(controller.getInput()));
                 controller.forwardPropagate();
                 var outputs=controller.getOutput();
                 if(outputs[0]>NN_THRESHOLD) r.incrementLeftVelocity();

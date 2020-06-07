@@ -72,7 +72,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 
   //Written by Swapneel
     private boolean collisionFunction(Coordinate.Double p){
-        return obstacles.parallelStream().anyMatch(o->{
+        return obstacles.stream().anyMatch(o->{
             var cp=center.getClosestPointOnSegment(o);
             var m=cp.distance(center);
             var intersects= m<=(width/2);
@@ -105,7 +105,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
     @Override
     public void run() {
         var v=(vl + vr)/2;
-        var collidingLines=shortest.entrySet().parallelStream().filter(Map.Entry::getValue);
+        var collidingLines=shortest.entrySet().stream().filter(Map.Entry::getValue);
         if(vl == vr){
             pos.testAndUpdate(this::collisionFunction,
                     x->x+v*Math.cos(-orientation)* delta,
@@ -165,7 +165,7 @@ public class Robo implements Runnable, Drawable, IRobotMovement {
 
     private void senseDistance(Line2D sensor, int index, double beamStrength){
     	//distances between obstacle and sensor beam origin
-        var distance=obstacles.parallelStream()
+        var distance=obstacles.stream()
                 .filter(p->p.intersectsLine(sensor))
                 .mapToDouble(p->findIntersectionPoint(p,sensor).distance(sensor.getP1())).min();
         distance.ifPresent(d->d=d*SENSOR_MAX/beamStrength);
